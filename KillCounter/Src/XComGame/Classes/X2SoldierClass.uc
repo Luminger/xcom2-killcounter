@@ -1,1 +1,0 @@
-class X2SoldierClass extends X2DataSet;

@@ -1,1 +1,0 @@
-class X2AbilityTrigger_PlayerInput extends X2AbilityTrigger;
