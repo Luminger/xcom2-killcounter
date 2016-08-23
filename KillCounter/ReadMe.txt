@@ -32,3 +32,5 @@ Possible future features:
 Features marked with [LOW] are questionable and might not be useful at all.
 Please feel free to leave a comment if you do think a features marked as [LOW]
 is worth implementing and I'll see if I raise the priority of it.
+
+This mod is open source: https://github.com/Luminger/xcom2-killcounter

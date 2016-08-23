@@ -2,31 +2,39 @@ class KillCounter extends UIScreenListener config(KillCounter);
 
 var config bool neverShowEnemyTotal;
 
-// Borrowed from: UIMissionSummary.uc (strings can be found in XComGame.[LANG]
-var localized string m_strEnemiesKilledLabel;
-
-var UIText Text;
-var UIPanel Panel;
+var KillCounter_UI UI;
 var bool ShowTotal;
 
 event OnInit(UIScreen Screen)
 {
-	ShowTotal = ShouldDrawShadowInfo();
-
-	RegisterEvents();
-	CreateUI(Screen);
-	UpdateText();
+	Initialize(Screen);
 }
-
 
 event OnReceiveFocus(UIScreen Screen)
 {
-	UpdateText();
+	Initialize(Screen);
+}
+
+event OnRemoved(UIScreen Screen)
+{
+	UnregisterEvents();
+}
+
+function Initialize(UIScreen Screen) {
+	if(UI != none)
+	{
+		return;
+	}
+
+	ShowTotal = ShouldDrawShadowInfo();
+	CreateUI(Screen);
+	RegisterEvents();
+	UpdateUI();
 }
 
 function EventListenerReturn OnReEvaluationEvent(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
 {
-	UpdateText();
+	UpdateUI();
 
 	return ELR_NoInterrupt;
 }
@@ -42,45 +50,50 @@ function RegisterEvents()
 	// If there's no ShadowChamber then there's no need to trigger as we won't show the value anyway
 	if(ShowTotal)
 	{
-		// Rerendering on 'ScamperBegin' should allow us to update the total in case it got updated (reinforcements, etc.)
 		EventManager.RegisterForEvent(ThisObj, 'UnitSpawned', OnReEvaluationEvent, ELD_OnVisualizationBlockStarted);
 	}
 
 	EventManager.RegisterForEvent(ThisObj, 'UnitDied', OnReEvaluationEvent, ELD_OnVisualizationBlockStarted);
 }
 
-function CreateUI(UIScreen Screen)
+function UnregisterEvents()
 {
-	Panel = Screen.Spawn(class'UIPanel', Screen);
-	Panel.InitPanel('KillCounter_UIPanel');
-	Panel.SetAnchor(class'UIUtilities'.const.ANCHOR_TOP_RIGHT);
-	Panel.SetPosition(-250, 55);
-	Panel.SetSize(250, 55);
+	local X2EventManager EventManager;
+	local Object ThisObj;
 
-	Text = Panel.Spawn(class'UIText', Panel);
-	Text.InitText('KillCounter_Text');
+	EventManager = `XEVENTMGR;
+	ThisObj = self;
 
-	UpdateText();
+	EventManager.UnRegisterFromAllEvents(ThisObj);
 }
 
-function UpdateText()
+function CreateUI(UIScreen Screen)
 {
-	local string Value;
-	Value = m_strEnemiesKilledLabel;
-	//Value @= class'UIUtilities_Text'.static.GetColoredText(string(GetKilledEnemies()), eUIState_Warning2);
-	Value @= string(GetKilledEnemies());
+	UI = Screen.Spawn(class'KillCounter_UI', Screen);
+	UI.InitPanel('KillCounter_UI');
+}
+
+function UpdateUI()
+{
+	local int killed, total;
+
+	if(UI == none)
+	{
+		return;
+	}
+
+	killed = GetKilledEnemies();
 
 	if(ShowTotal)
 	{
-		Value $= "/";
-		//Value $= class'UIUtilities_Text'.static.GetColoredText(string(GetTotalEnemies()), eUIState_Warning2);
-		Value $= string(GetTotalEnemies());
+		total = GetTotalEnemies();
+	}
+	else
+	{
+		total = -1;
 	}
 
-	Value = class'UIUtilities_Text'.static.StyleText(Value, eUITextStyle_Body);
-
-	Text.SetCenteredText(Value, Panel);
-	//Text.SetHtmlText(Value);
+	UI.UpdateText(killed, total);
 }
 
 function bool ShouldDrawShadowInfo()
@@ -88,7 +101,8 @@ function bool ShouldDrawShadowInfo()
 	local XComGameState_HeadquartersXCom XComHQ;
 
 	// Don't even look after the ShadowChamber, we just don't show it
-	if(neverShowEnemyTotal) {
+	if(neverShowEnemyTotal) 
+	{
 		return false;
 	}
 
@@ -116,9 +130,10 @@ function int GetKilledEnemies()
 
 	Battle = XGBattle_SP(`BATTLE);
 	Battle.GetAIPlayer().GetOriginalUnits(arrUnits, true);
-
-	ForEach arrUnits(arrUnit) {
-		if(arrUnit.IsDead()) {
+	ForEach arrUnits(arrUnit) 
+	{
+		if(arrUnit.IsDead()) 
+		{
 			iKilled++;
 		}
 	}
@@ -129,4 +144,5 @@ function int GetKilledEnemies()
 defaultproperties
 {
 	ScreenClass = class'UITacticalHUD';
+	ShowTotal = false;
 }
