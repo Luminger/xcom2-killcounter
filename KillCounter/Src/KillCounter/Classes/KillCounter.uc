@@ -1,37 +1,25 @@
 class KillCounter extends UIScreenListener config(KillCounter);
 
 var config bool neverShowEnemyTotal;
-
-var KillCounter_UI UI;
 var bool ShowTotal;
 
 event OnInit(UIScreen Screen)
 {
-	Initialize(Screen);
+	ShowTotal = ShouldDrawShadowInfo();
+	RegisterEvents();
+	UpdateUI();
 }
 
 event OnReceiveFocus(UIScreen Screen)
 {
-	Initialize(Screen);
+	UpdateUI();
 }
 
 event OnRemoved(UIScreen Screen)
 {
 	UnregisterEvents();
+	DestroyUI();
 }
-
-function Initialize(UIScreen Screen) {
-	if(UI != none)
-	{
-		return;
-	}
-
-	ShowTotal = ShouldDrawShadowInfo();
-	CreateUI(Screen);
-	RegisterEvents();
-	UpdateUI();
-}
-
 function EventListenerReturn OnReEvaluationEvent(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
 {
 	UpdateUI();
@@ -67,20 +55,36 @@ function UnregisterEvents()
 	EventManager.UnRegisterFromAllEvents(ThisObj);
 }
 
-function CreateUI(UIScreen Screen)
+function KillCounter_UI GetUI()
 {
-	UI = Screen.Spawn(class'KillCounter_UI', Screen);
-	UI.InitPanel('KillCounter_UI');
+	local UIScreen hud;
+	local KillCounter_UI ui;
+
+	hud = `PRES.GetTacticalHUD();
+	ui = KillCounter_UI(hud.GetChild('KillCounter_UI'));
+
+	if(ui == none)
+	{
+		ui = hud.Spawn(class'KillCounter_UI', hud);
+		ui.InitPanel('KillCounter_UI');
+	}
+
+	return ui;
+}
+
+function DestroyUI()
+{
+	local KillCounter_UI ui;
+	ui = GetUI();
+	ui.Remove();
 }
 
 function UpdateUI()
 {
 	local int killed, total;
-
-	if(UI == none)
-	{
-		return;
-	}
+	local KillCounter_UI ui;
+	
+	ui = GetUI(); 
 
 	killed = GetKilledEnemies();
 
@@ -93,7 +97,7 @@ function UpdateUI()
 		total = -1;
 	}
 
-	UI.UpdateText(killed, total);
+	ui.UpdateText(killed, total);
 }
 
 function bool ShouldDrawShadowInfo()
