@@ -1,2 +1,5 @@
 [KillCounter_UI]
-m_strEnemiesKilledLabel="ENEMIES KILLED:"
+strKilled="Killed:"
+strActive="Active:"
+strTotal="Total:"
+strRemaining="Remaining:"

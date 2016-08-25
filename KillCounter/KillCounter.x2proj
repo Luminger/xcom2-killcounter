@@ -39,6 +39,9 @@
     <Content Include="Src\KillCounter\Classes\KillCounter_UI.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\KillCounter\Classes\KillCounter_Utils.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\KillCounter\Classes\X2DownloadableContentInfo_KillCounter.uc" />
     <None Include="Src\XComGame\Classes\AnimNotify_ApplyPsiEffectsToTarget.uc">
       <SubType>Content</SubType>

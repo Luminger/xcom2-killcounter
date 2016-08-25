@@ -1,11 +1,20 @@
 class KillCounter extends UIScreenListener config(KillCounter);
 
 var config bool neverShowEnemyTotal;
+var config bool neverShowActiveEnemyCount;
+var config bool alwaysShowEnemyTotal;
+var config bool showRemainingInsteadOfTotal;
+
 var bool ShowTotal;
+var bool ShowActive;
+var bool ShowRemaining;
 
 event OnInit(UIScreen Screen)
 {
-	ShowTotal = ShouldDrawShadowInfo();
+	ShowTotal = ShouldDrawTotalCount();
+	ShowActive = ShouldDrawActiveCount();
+	ShowRemaining = ShouldDrawRemainingCount();
+
 	RegisterEvents();
 	UpdateUI();
 }
@@ -41,6 +50,8 @@ function RegisterEvents()
 		EventManager.RegisterForEvent(ThisObj, 'UnitSpawned', OnReEvaluationEvent, ELD_OnVisualizationBlockStarted);
 	}
 
+	EventManager.RegisterForEvent(ThisObj, 'OnSpawnReinforcementsComplete', OnReEvaluationEvent, ELD_OnVisualizationBlockStarted);
+	EventManager.RegisterForEvent(ThisObj, 'ScamperBegin', OnReEvaluationEvent, ELD_OnVisualizationBlockStarted);
 	EventManager.RegisterForEvent(ThisObj, 'UnitDied', OnReEvaluationEvent, ELD_OnVisualizationBlockStarted);
 }
 
@@ -81,72 +92,46 @@ function DestroyUI()
 
 function UpdateUI()
 {
-	local int killed, total;
+	local int killed, total, active;
 	local KillCounter_UI ui;
 	
 	ui = GetUI(); 
 
-	killed = GetKilledEnemies();
+	killed = class'KillCounter_Utils'.static.GetKilledEnemies();
+	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies() : -1;
+	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies() : -1;
 
-	if(ShowTotal)
-	{
-		total = GetTotalEnemies();
-	}
-	else
-	{
-		total = -1;
-	}
-
-	ui.UpdateText(killed, total);
+	ui.UpdateText(killed, total, active, ShowRemaining);
 }
 
-function bool ShouldDrawShadowInfo()
+function bool ShouldDrawTotalCount()
 {
-	local XComGameState_HeadquartersXCom XComHQ;
-
-	// Don't even look after the ShadowChamber, we just don't show it
-	if(neverShowEnemyTotal) 
+	if(alwaysShowEnemyTotal)
+	{
+		return true;
+	}
+	else if(neverShowEnemyTotal) 
 	{
 		return false;
-	}
+	} 
 
-	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
-	return XComHQ.GetFacilityByName('ShadowChamber') != none;
+	return class'KillCounter_Utils'.static.IsShadowChamberBuild();
 }
 
-function int GetTotalEnemies()
+function bool ShouldDrawActiveCount()
 {
-	local array<XComGameState_Unit> arrUnits;
-	local XGBattle_SP Battle;
-
-	Battle = XGBattle_SP(`BATTLE);
-	Battle.GetAIPlayer().GetOriginalUnits(arrUnits, true);
-
-	return arrUnits.Length;
+	return !neverShowActiveEnemyCount;
 }
 
-function int GetKilledEnemies()
+function bool ShouldDrawRemainingCount()
 {
-	local int iKilled;
-	local array<XComGameState_Unit> arrUnits;
-	local XComGameState_Unit arrUnit;
-	local XGBattle_SP Battle;
-
-	Battle = XGBattle_SP(`BATTLE);
-	Battle.GetAIPlayer().GetOriginalUnits(arrUnits, true);
-	ForEach arrUnits(arrUnit) 
-	{
-		if(arrUnit.IsDead()) 
-		{
-			iKilled++;
-		}
-	}
-
-	return iKilled;
+	return showRemainingInsteadOfTotal;
 }
 
 defaultproperties
 {
 	ScreenClass = class'UITacticalHUD';
 	ShowTotal = false;
+	ShowActive = true;
+	ShowRemaining = true;
 }
