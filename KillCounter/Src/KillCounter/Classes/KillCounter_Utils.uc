@@ -49,20 +49,39 @@ static function int GetKilledEnemies()
 
 static function int GetActiveEnemies()
 {
-	local int iActive, AlertLevel;
+	local int iActive, AlertLevel, DataID;
 	local array<XComGameState_Unit> arrUnits;
 	local XComGameState_Unit arrUnit;
+	local XComGameStateHistory History;
+	local XComGameState_AIUnitData AIData;
+	local StateObjectReference KnowledgeRef;
 
+	History = `XCOMHISTORY;
 	GetOpponentUnits(arrUnits, false);
+
 	ForEach arrUnits(arrUnit) 
 	{
 		// Code originates from XComGameState_AIGroup::IsEngaged()
-		if(arrUnit.IsAlive())
+		if(!arrUnit.IsAlive())
 		{
-			AlertLevel = arrUnit.GetCurrentStat(eStat_AlertLevel);
-			if (AlertLevel >= `ALERT_LEVEL_YELLOW)
+			continue;
+		}
+
+		AlertLevel = arrUnit.GetCurrentStat(eStat_AlertLevel);
+		if(AlertLevel == `ALERT_LEVEL_RED)
+		{
+			iActive++;
+		}
+		else if (AlertLevel == `ALERT_LEVEL_YELLOW)
+		{
+			DataID = arrUnit.GetAIUnitDataID();
+			if( DataID > 0 )
 			{
-				iActive++;
+				AIData = XComGameState_AIUnitData(History.GetGameStateForObjectID(DataID));
+				if( AIData.HasAbsoluteKnowledge(KnowledgeRef) )  
+				{
+					iActive++;
+				}
 			}
 		}
 	}
