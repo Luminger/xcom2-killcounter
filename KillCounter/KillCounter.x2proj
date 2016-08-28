@@ -43,6 +43,57 @@
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\KillCounter\Classes\X2DownloadableContentInfo_KillCounter.uc" />
+    <None Include="Src\XComGame\Classes\FlashMovie.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxAction_CloseMovie.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxAction_GetVariable.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxAction_Invoke.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxAction_OpenMovie.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxAction_SetCaptureKeys.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxAction_SetVariable.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxClikWidget.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxEngine.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxEvent_FsCommand.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxFSCmdHandler.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxFSCmdHandler_Kismet.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxInteraction.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxMoviePlayer.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxObject.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\GFxRawData.uc">
+      <SubType>Content</SubType>
+    </None>
+    <None Include="Src\XComGame\Classes\SwfMovie.uc">
+      <SubType>Content</SubType>
+    </None>
     <None Include="Src\XComGame\Classes\AnimNotify_ApplyPsiEffectsToTarget.uc">
       <SubType>Content</SubType>
     </None>

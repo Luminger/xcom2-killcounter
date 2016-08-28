@@ -122,3 +122,83 @@ static function GetOpponentUnits(out array<XComGameState_Unit> arrUnits, bool sk
 		Battle.GetAIPlayer().GetOriginalUnits(arrUnits, skipTurrets);
 	}
 }
+
+// This is a UnrealScript translation from the original ActionScript function.
+// You can find it in the Components.SwfMoview within 'scripts/__Packages/Utilities'
+// which is located in the gfxComponents.upk.
+//
+// Usage: Call this with your UIText element AFTER you've called InitText() on it!
+static function ShadowToTextField(UIText panel)
+{
+	local string path;
+	local UIMovie mov;
+	path = string(panel.MCPath) $ ".text";
+	mov = panel.Movie;
+
+	mov.SetVariableString(path $ ".shadowStyle", "s{0,0}{0,0){0,0}t{0,0}");
+	mov.SetVariableNumber(path $ ".shadowColor", 0);
+	mov.SetVariableNumber(path $ ".shadowBlurX", 3);
+	mov.SetVariableNumber(path $ ".shadowBlurY", 3);
+	mov.SetVariableNumber(path $ ".shadowStrength", 15);
+	mov.SetVariableNumber(path $ ".shadowAngle", 0);
+	mov.SetVariableNumber(path $ ".shadowAlpha", 0.25);
+	mov.SetVariableNumber(path $ ".shadowDistance", 0);
+}
+
+// This is a UnrealScript translation from the original ActionScript function.
+// You can find it in the Components.SwfMoview within 'scripts/__Packages/Utilities'
+// which is located in the gfxComponents.upk.
+//
+// Usage: Call this with your UIText element AFTER you've called InitText() on it!
+static function OutlineTextField(UIText panel, int thickness)
+{
+	local string path;
+	local UIMovie mov;
+	path = string(panel.MCPath) $ ".text";
+	mov = panel.Movie;
+
+	mov.SetVariableString(path $ ".shadowStyle", "s{" $ thickness $ ",0}{0," $ 
+		thickness $ "}{" $ thickness $ "," $ thickness $ "}{" $ -1 * thickness $
+		",0}{0," $ -1 * thickness $ "}{" $ -1 * thickness $ "," $ -1 * thickness $
+		"}{" $ thickness $ "," $ -1 * thickness $ "}{" $ -1 * thickness $ ","
+		$ thickness $ "}t{0,0}");
+	mov.SetVariableNumber(path $ ".shadowColor", 3552822);
+	mov.SetVariableNumber(path $ ".shadowBlurX", 1);
+	mov.SetVariableNumber(path $ ".shadowBlurY", 1);
+	mov.SetVariableNumber(path $ ".shadowStrength", thickness);
+	mov.SetVariableNumber(path $ ".shadowAngle", 0);
+	mov.SetVariableNumber(path $ ".shadowAlpha", 0.5);
+	mov.SetVariableNumber(path $ ".shadowDistance", 0);
+}
+
+// Used to find the above values. Kind of a mess, but does the job...
+static function TestValueOnPanel(UIPanel panel, string prop)
+{
+	local ASValue val;
+	local string fullpath;
+
+	fullpath = string(panel.MCPath) $ "." $ prop;
+	val = panel.Movie.GetVariable(fullpath);
+
+	`Log("Path:" @ fullpath);
+	if(val.Type == AS_Undefined)
+	{
+		`Log("Type:" @ val.Type);
+	}
+	else if (val.Type == AS_Null)
+	{
+		`Log("Type:" @ val.Type);
+	}
+	else if (val.Type == AS_Boolean)
+	{
+		`Log("Type:" @ val.Type @ "Value:" @ val.b);
+	}
+	else if (val.Type == AS_Number)
+	{
+		`Log("Type:" @ val.Type @ "Value:" @ val.n);
+	}
+	else if (val.Type == AS_String)
+	{
+		`Log("Type:" @ val.Type @ "Value:" @ val.s);
+	}
+}
