@@ -22,9 +22,7 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	Text.InitText('KillCounter_Text');
 	Text.SetSize(Width, Height);
 
-	//DebugShadowProperties();
 	class'KillCounter_Utils'.static.ShadowToTextField(Text);
-	//DebugShadowProperties();
 
 	TextStyle = class'UIUtilities_Text'.static.GetStyle(eUITextStyle_Tooltip_H2);
 	TextStyle.Alignment = "RIGHT";
@@ -36,6 +34,11 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 function UpdateText(int killed, int total, int active, bool showRemaining)
 {
 	local string Value;
+
+	if(Text == none)
+	{
+		return;
+	}
 
 	Value = strKilled @ AddColor(killed, eUIState_Good);
 
@@ -57,19 +60,6 @@ function UpdateText(int killed, int total, int active, bool showRemaining)
 	}
 
 	Text.SetHtmlText(class'UIUtilities_Text'.static.ApplyStyle(Value, TextStyle));
-	//DebugShadowProperties();
-}
-
-function DebugShadowProperties()
-{
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowStyle");
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowColor");
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowBlurX");
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowBlurY");
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowStrength");
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowAngle");
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowAlpha");
-	class'KillCounter_Utils'.static.TestValueOnPanel(Text, "text.shadowDistance");
 }
 
 function string AddColor(int value, int clr)

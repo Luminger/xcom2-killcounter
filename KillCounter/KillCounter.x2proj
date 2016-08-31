@@ -42,6 +42,9 @@
     <Content Include="Src\KillCounter\Classes\KillCounter_Utils.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\KillCounter\Classes\UIShadowText.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\KillCounter\Classes\X2DownloadableContentInfo_KillCounter.uc" />
     <None Include="Src\XComGame\Classes\FlashMovie.uc">
       <SubType>Content</SubType>
