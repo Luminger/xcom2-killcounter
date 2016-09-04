@@ -39,9 +39,50 @@ alwaysShowActiveEnemyCount=true
 ; count of enemies, set it to true and you'll get the remaining count.
 showRemainingInsteadOfTotal=true
 
+; As turrets don't count into the 'total enemies killed' at the end of the mission, we
+; don't include them here as well by default. If you like, you can enable counting them.
+includeTurrets=false
+
 [KillCounter.KillCounter_UI]
 ; Disable coloring of all numbers
 noColor=false
+
+; General notice: The UI consists of a surrounding (invisible) 'box' which is anchored to
+; the screen. This 'box' is filled by the actual 'textbox'. When the 'box' is spawned, the
+; upper left corner is placed at the chosen Anchor. This is why the 'box' is by default
+; (anchored to the TOP_RIGHT) by -360 on the X axis and 50 on the Y axis. The 'box' itself
+; is currently 360*50 (X*Y).
+
+; How the text is aligned witin the 'box'.
+; Possible values: RIGHT, LEFT, CENTER
+textAlignment="RIGHT"
+
+; Where the 'box' (which holds the text) is anchored on the screen (the whole screen).
+; Possible values (straight from the UIUtilities class):
+;   0 (ANCHOR_NONE)
+;   1 (ANCHOR_TOP_LEFT)
+;   2 (ANCHOR_TOP_CENTER)
+;   3 (ANCHOR_TOP_RIGHT)
+;   4 (ANCHOR_MIDDLE_LEFT)
+;   5 (ANCHOR_MIDDLE_CENTER)
+;   6 (ANCHOR_MIDDLE_RIGHT)
+;   7 (ANCHOR_BOTTOM_LEFT)
+;   8 (ANCHOR_BOTTOM_CENTER)
+;   9 (ANCHOR_BOTTOM_RIGHT)
+Anchor=3
+
+; By how much the 'box' should be offset from its anchor on the X axis
+OffsetX=-360
+
+; By how much the 'box' should be offset from its anchor on the Y axis
+OffsetY=50
+
+; As an example, this is an alternative placement on the bottom left of the screen,
+; right above the 'currently selected soldier' box.
+;textAlignment="LEFT"
+;Anchor=7
+;OffsetX=10
+;OffsetY=-180
 
 This mod is still in early development and likely to develop more features (and
 bugfixes whenever needed). I'll do my best to keep it working, but this may
@@ -52,8 +93,7 @@ Possible future features:
    you have any other idea how to visualize this properly (I'm not a UI 
    designer) please leave a comment [LOW]
  - Give players the option to not count reinforcements into the total count
-   [LOW]
- - Give players the option to move the UI wherever they please [HIGH]
+   (looks like this is way more complex than I though) [LOW]
  - Give players the option to disable the remaining/total count in story
    missions where the count is rather high and it adds to the 'thrill' of
    those missions. [LOW]

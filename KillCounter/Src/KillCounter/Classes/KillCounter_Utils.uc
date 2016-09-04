@@ -8,12 +8,12 @@ static function bool IsShadowChamberBuild()
 	return XComHQ.GetFacilityByName('ShadowChamber') != none;
 }
 
-static function int GetTotalEnemies()
+static function int GetTotalEnemies(bool skipTurrets)
 {
 	local int iTotal, iPrevSeen, iPrevKilled;
 	local array<XComGameState_Unit> arrUnits;
 
-	GetOpponentUnits(arrUnits, true);
+	GetOpponentUnits(arrUnits, skipTurrets);
 	iTotal = arrUnits.Length;
 
 	if(GetTransferMissionStats(iPrevSeen, iPrevKilled))
@@ -24,13 +24,13 @@ static function int GetTotalEnemies()
 	return iTotal;
 }
 
-static function int GetKilledEnemies()
+static function int GetKilledEnemies(bool skipTurrets)
 {
 	local int iKilled, iPrevSeen, iPrevKilled;
 	local array<XComGameState_Unit> arrUnits;
 	local XComGameState_Unit arrUnit;
 
-	GetOpponentUnits(arrUnits, true);
+	GetOpponentUnits(arrUnits, skipTurrets);
 	ForEach arrUnits(arrUnit) 
 	{
 		if(arrUnit.IsDead()) 
@@ -47,7 +47,7 @@ static function int GetKilledEnemies()
 	return iKilled;
 }
 
-static function int GetActiveEnemies()
+static function int GetActiveEnemies(bool skipTurrets)
 {
 	local int iActive, AlertLevel, DataID;
 	local array<XComGameState_Unit> arrUnits;
@@ -57,7 +57,7 @@ static function int GetActiveEnemies()
 	local StateObjectReference KnowledgeRef;
 
 	History = `XCOMHISTORY;
-	GetOpponentUnits(arrUnits, false);
+	GetOpponentUnits(arrUnits, skipTurrets);
 
 	ForEach arrUnits(arrUnit) 
 	{

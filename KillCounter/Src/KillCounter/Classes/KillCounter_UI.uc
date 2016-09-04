@@ -5,8 +5,11 @@ var localized string strActive;
 var localized string strTotal;
 var localized string strRemaining;
 
-var config bool neverShowActiveEnemyCount;
 var config bool noColor;
+var config string textAlignment;
+var config int BoxAnchor;
+var config int OffsetX;
+var config int OffsetY;
 
 var UIText Text;
 var UITextStyleObject TextStyle;
@@ -14,9 +17,9 @@ var UITextStyleObject TextStyle;
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
 {
 	super.InitPanel(InitName, InitLibID);
-	self.SetAnchor(class'UIUtilities'.const.ANCHOR_TOP_RIGHT);
-	self.SetPosition(-360, 50);
+	self.SetAnchor(BoxAnchor);
 	self.SetSize(350, 50);
+	self.SetPosition(OffsetX, OffsetY); 
 
 	Text = Spawn(class'UIText', self);
 	Text.InitText('KillCounter_Text');
@@ -25,7 +28,7 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	class'KillCounter_Utils'.static.ShadowToTextField(Text);
 
 	TextStyle = class'UIUtilities_Text'.static.GetStyle(eUITextStyle_Tooltip_H2);
-	TextStyle.Alignment = "RIGHT";
+	TextStyle.Alignment = textAlignment;
 	TextStyle.bUseCaps = False;
 
 	return self;

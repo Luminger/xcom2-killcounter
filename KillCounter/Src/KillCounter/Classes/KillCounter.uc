@@ -4,10 +4,12 @@ var config bool neverShowEnemyTotal;
 var config bool neverShowActiveEnemyCount;
 var config bool alwaysShowEnemyTotal;
 var config bool showRemainingInsteadOfTotal;
+var config bool includeTurrets;
 
 var bool ShowTotal;
 var bool ShowActive;
 var bool ShowRemaining;
+var bool SkipTurrets;
 
 var int LastRealizedIndex;
 
@@ -16,6 +18,7 @@ event OnInit(UIScreen Screen)
 	ShowTotal = ShouldDrawTotalCount();
 	ShowActive = ShouldDrawActiveCount();
 	ShowRemaining = ShouldDrawRemainingCount();
+	SkipTurrets = ShouldSkipTurrets();
 
 	RegisterEvents();
 }
@@ -119,9 +122,9 @@ function UpdateUI()
 		return;
 	}
 
-	killed = class'KillCounter_Utils'.static.GetKilledEnemies();
-	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies() : -1;
-	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies() : -1;
+	killed = class'KillCounter_Utils'.static.GetKilledEnemies(SkipTurrets);
+	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(SkipTurrets) : -1;
+	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
 
 	ui.UpdateText(killed, total, active, ShowRemaining);
 
@@ -152,10 +155,16 @@ function bool ShouldDrawRemainingCount()
 	return showRemainingInsteadOfTotal;
 }
 
+function bool ShouldSkipTurrets()
+{
+	return !includeTurrets;
+}
+
 defaultproperties
 {
 	ScreenClass = class'UITacticalHUD';
 	ShowTotal = false;
 	ShowActive = true;
 	ShowRemaining = true;
+	SkipTurrets = true;
 }

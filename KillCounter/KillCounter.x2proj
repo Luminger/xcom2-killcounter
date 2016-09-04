@@ -25,6 +25,9 @@
     <Content Include="LICENSE.txt">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Localization\KillCounter.fra">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Localization\KillCounter.int">
       <SubType>Content</SubType>
     </Content>
@@ -40,9 +43,6 @@
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\KillCounter\Classes\KillCounter_Utils.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\KillCounter\Classes\UIShadowText.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\KillCounter\Classes\X2DownloadableContentInfo_KillCounter.uc" />
