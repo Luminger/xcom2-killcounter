@@ -1,0 +1,5 @@
+[KillCounter_UI]
+strKilled="Убито:"
+strActive="Активно:"
+strTotal="Всего:"
+strRemaining="Осталось:"

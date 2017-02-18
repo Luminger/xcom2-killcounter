@@ -24,16 +24,22 @@ static function int GetTotalEnemies(bool skipTurrets)
 	return iTotal;
 }
 
-static function int GetKilledEnemies(bool skipTurrets)
+static function int GetKilledEnemies(XComGameState gameState, bool skipTurrets)
 {
 	local int iKilled, iPrevSeen, iPrevKilled;
 	local array<XComGameState_Unit> arrUnits;
-	local XComGameState_Unit arrUnit;
+	local XComGameState_Unit arrUnit, currentUnit;
 
 	GetOpponentUnits(arrUnits, skipTurrets);
 	ForEach arrUnits(arrUnit) 
 	{
-		if(arrUnit.IsDead()) 
+		currentUnit = XComGameState_Unit(gameState.GetGameStateForObjectID(arrUnit.ObjectID));
+		if(currentUnit == none)
+		{
+			continue;
+		}
+
+		if(currentUnit.IsDead()) 
 		{
 			iKilled++;
 		}
@@ -47,38 +53,41 @@ static function int GetKilledEnemies(bool skipTurrets)
 	return iKilled;
 }
 
-static function int GetActiveEnemies(bool skipTurrets)
+static function int GetActiveEnemies(XComGameState gameState, bool skipTurrets)
 {
 	local int iActive, AlertLevel, DataID;
 	local array<XComGameState_Unit> arrUnits;
-	local XComGameState_Unit arrUnit;
-	local XComGameStateHistory History;
+	local XComGameState_Unit arrUnit, currentUnit;
 	local XComGameState_AIUnitData AIData;
 	local StateObjectReference KnowledgeRef;
 
-	History = `XCOMHISTORY;
 	GetOpponentUnits(arrUnits, skipTurrets);
-
 	ForEach arrUnits(arrUnit) 
 	{
-		// Code originates from XComGameState_AIGroup::IsEngaged()
-		if(!arrUnit.IsAlive())
+		currentUnit = XComGameState_Unit(gameState.GetGameStateForObjectID(arrUnit.ObjectID));
+		if(currentUnit == none)
 		{
 			continue;
 		}
 
-		AlertLevel = arrUnit.GetCurrentStat(eStat_AlertLevel);
+		// Code originates from XComGameState_AIGroup::IsEngaged()
+		if(!currentUnit.IsAlive())
+		{
+			continue;
+		}
+
+		AlertLevel = currentUnit.GetCurrentStat(eStat_AlertLevel);
 		if(AlertLevel == `ALERT_LEVEL_RED)
 		{
 			iActive++;
 		}
 		else if (AlertLevel == `ALERT_LEVEL_YELLOW)
 		{
-			DataID = arrUnit.GetAIUnitDataID();
+			DataID = currentUnit.GetAIUnitDataID();
 			if( DataID > 0 )
 			{
-				AIData = XComGameState_AIUnitData(History.GetGameStateForObjectID(DataID));
-				if( AIData.HasAbsoluteKnowledge(KnowledgeRef) )  
+				AIData = XComGameState_AIUnitData(gameState.GetGameStateForObjectID(DataID));
+				if( AIData != none && AIData.HasAbsoluteKnowledge(KnowledgeRef) )  
 				{
 					iActive++;
 				}
@@ -87,6 +96,21 @@ static function int GetActiveEnemies(bool skipTurrets)
 	}
 
 	return iActive;
+}
+
+static function bool GetClassFromGameState(XComGameState GameState, class<object> SearchClass, out object GameStateObject)
+{
+	foreach GameState.IterateByClassType(SearchClass, GameStateObject)
+	{
+		break;
+	}
+
+	if(GameStateObject == none)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 static function bool GetTransferMissionStats(out int seen, out int killed)

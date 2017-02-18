@@ -8,6 +8,9 @@
     <AssemblyName>KillCounter</AssemblyName>
     <RootNamespace>KillCounter</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="Config\" />
     <Folder Include="Content\" />
@@ -25,10 +28,16 @@
     <Content Include="LICENSE.txt">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Localization\KillCounter.deu">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Localization\KillCounter.fra">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Localization\KillCounter.int">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Localization\KillCounter.rus">
       <SubType>Content</SubType>
     </Content>
     <Content Include="ReadMe.txt" />
