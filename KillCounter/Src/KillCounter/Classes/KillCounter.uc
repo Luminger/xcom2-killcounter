@@ -16,7 +16,6 @@ var int LastActive;
 var int LastTotal;
 
 var int LastRealizedIndex;
-var array<int> MissingGameStates;
 var array<int> AlreadySeenIndexes;
 var bool FirstTime;
 
@@ -39,10 +38,6 @@ event OnRemoved(UIScreen Screen)
 
 event OnVisualizationBlockComplete(XComGameState AssociatedGameState)
 {
-	local XComGameState usedGameState;
-	//local int logIndex;
-	local bool useIndex;
-
 	if(FirstTime)
 	{
 		`log("First Trigger skipped!");
@@ -50,85 +45,17 @@ event OnVisualizationBlockComplete(XComGameState AssociatedGameState)
 		return;
 	}
 
-	useIndex = ShouldGivenGameStateBeUsed(AssociatedGameState.HistoryIndex);
-
-	//`log("/---------------------------------------------------\\");
-	//`log("GivenIndex: " @ string(AssociatedGameState.HistoryIndex));
-	//`log("Result: " @ string(useIndex));
-	//`log("LastRealizedIndex: " @ string(LastRealizedIndex));
-	//`log("AlreadySeenIndexes: ");
-	//ForEach AlreadySeenIndexes(logIndex)
-	//{
-	//	`log(" => " @ string(logIndex) @ `XCOMHISTORY.GetGameStateFromHistory(logIndex, eReturnType_Copy, false).GetContext().SummaryString());
-	//
-	//}
-
-	//`log("\\---------------------------------------------------/");
-
-	if(!useIndex)
+	if(!ShouldGivenGameStateBeUsed(AssociatedGameState.HistoryIndex))
 	{
 		return;
 	}
 
-	usedGameState = AssociatedGameState;
-	if(AssociatedGameState.bIsDelta)
-	{
-		usedGameState = `XCOMHISTORY.GetGameStateFromHistory(AssociatedGameState.HistoryIndex, eReturnType_Copy, false);
-		if (usedGameState == none)
-		{
-			return;
-		}
-	}
-
-	UpdateUI(usedGameState);
-	//LastRealizedIndex = AssociatedGameState.HistoryIndex;
+	UpdateUI(AssociatedGameState.HistoryIndex);
 }
 
 function int sortIntArrayAsc(int a, int b)
 {
 	return b - a;
-}
-
-function int findFirstNonInterruptedFrame(int start)
-{
-	local int frame;
-	for(frame = start; frame > 0; frame++)
-	{
-		if(!IsGameStateInterrupted(frame))
-		{
-			return frame;
-		}
-	}
-}
-
-function int findLastNonInterruptedFrame(int start)
-{
-	local int frame;
-	for(frame = start; frame > 0; frame--)
-	{
-		if(!IsGameStateInterrupted(frame))
-		{
-			return frame;
-		}
-	}
-
-	return -1;
-}
-
-function int findInterruptCountBetween(int start, int end)
-{
-	local int interrupted, i;
-
-	interrupted = 0;
-	for(i = start; i < end; i++)
-	{
-		if(IsGameStateInterrupted(i))
-		{
-			interrupted++;
-		}
-	}
-
-	return interrupted;
 }
 
 function bool ShouldGivenGameStateBeUsed(int index)
@@ -194,64 +121,46 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	return false;
 }
 
-function bool ShouldGivenGameStateBeUsed_old(int index)
+function int findFirstNonInterruptedFrame(int start)
 {
-	local int missing;
-	local int pos;
-	local int highestMissingIndex;
-
-	if(index == 0)
+	local int frame;
+	for(frame = start; frame > 0; frame++)
 	{
-		return false;
-	}
-
-	pos = MissingGameStates.Find(index);
-	if(pos != INDEX_NONE)
-	{
-		MissingGameStates.Remove(pos, 1);
-	}
-
-	if(index == LastRealizedIndex + 1 || LastRealizedIndex == -1)
-	{
-		LastRealizedIndex = index;
-		return true;
-	}
-
-	if(MissingGameStates.Length == 0)
-	{
-		highestMissingIndex = LastRealizedIndex;
-	}
-	else
-	{
-		highestMissingIndex = MissingGameStates[MissingGameStates.Length-1];
-	}
-
-	if(index > highestMissingIndex)
-	{
-		for(missing = highestMissingIndex + 1; missing < index; missing++)
+		if(!IsGameStateInterrupted(frame))
 		{
-			if(!IsGameStateInterrupted(missing))
-			{
-				if(MissingGameStates.Find(missing) == INDEX_NONE)
-				{
-					MissingGameStates.AddItem(missing);
-				}
-			}
-			else
-			{
-				`log("Won't add " @ missing @ " as it was interrupted");
-			}
+			return frame;
 		}
-
-		MissingGameStates.Sort(sortIntArrayAsc);
 	}
+}
 
-	if(MissingGameStates.Length == 0)
+function int findLastNonInterruptedFrame(int start)
+{
+	local int frame;
+	for(frame = start; frame > 0; frame--)
 	{
-		return true;
+		if(!IsGameStateInterrupted(frame))
+		{
+			return frame;
+		}
 	}
 
-	return false;
+	return -1;
+}
+
+function int findInterruptCountBetween(int start, int end)
+{
+	local int interrupted, i;
+
+	interrupted = 0;
+	for(i = start; i < end; i++)
+	{
+		if(IsGameStateInterrupted(i))
+		{
+			interrupted++;
+		}
+	}
+
+	return interrupted;
 }
 
 function bool IsGameStateInterrupted(int index)
@@ -285,24 +194,6 @@ event OnVisualizationIdle()
 		gameState = `XCOMHISTORY.GetGameStateFromHistory(cur);
 		`log(cur @ gameState.GetContext().SummaryString());
 	}
-
-	return;
-	if (MissingGameStates.Length == 0)
-	{
-		// Nothing to do this time.
-		//return;
-	}
-
-	// As things are probably out of sync, force a resync whenever the Visualizer is idle again
-	`log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX - WE ARE IDLE AND NEED TO CLEAN UP STUFF!");
-
-	LastRealizedIndex = -1;
-	MissingGameStates.Length = 0;
-	AlreadySeenIndexes.Length = 0;
-
-	index = `XCOMHISTORY.GetCurrentHistoryIndex();
-	gameState = `XCOMHISTORY.GetGameStateFromHistory(index, eReturnType_Copy, false);
-	UpdateUI(gameState);
 }
 
 event OnActiveUnitChanged(XComGameState_Unit NewActiveUnit);
@@ -351,7 +242,7 @@ function DestroyUI()
 	ui.Remove();
 }
 
-function UpdateUI(XComGameState gameState)
+function UpdateUI(int historyIndex)
 {
 	local int killed, total, active;
 	local KillCounter_UI ui;
@@ -362,8 +253,8 @@ function UpdateUI(XComGameState gameState)
 		return;
 	}
 
-	killed = class'KillCounter_Utils'.static.GetKilledEnemies(gameState, SkipTurrets);
-	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(gameState, SkipTurrets) : -1;
+	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
+	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
 	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
 
 	if (killed != LastKilled || active != LastActive || total != LastTotal)

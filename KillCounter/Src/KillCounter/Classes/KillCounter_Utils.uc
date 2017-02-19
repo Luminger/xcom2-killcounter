@@ -24,7 +24,7 @@ static function int GetTotalEnemies(bool skipTurrets)
 	return iTotal;
 }
 
-static function int GetKilledEnemies(XComGameState gameState, bool skipTurrets)
+static function int GetKilledEnemies(int historyIndex, bool skipTurrets)
 {
 	local int iKilled, iPrevSeen, iPrevKilled;
 	local array<XComGameState_Unit> arrUnits;
@@ -33,7 +33,7 @@ static function int GetKilledEnemies(XComGameState gameState, bool skipTurrets)
 	GetOpponentUnits(arrUnits, skipTurrets);
 	ForEach arrUnits(arrUnit) 
 	{
-		currentUnit = XComGameState_Unit(gameState.GetGameStateForObjectID(arrUnit.ObjectID));
+		currentUnit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(arrUnit.ObjectID, eReturnType_Reference, historyIndex));
 		if(currentUnit == none)
 		{
 			continue;
@@ -53,7 +53,7 @@ static function int GetKilledEnemies(XComGameState gameState, bool skipTurrets)
 	return iKilled;
 }
 
-static function int GetActiveEnemies(XComGameState gameState, bool skipTurrets)
+static function int GetActiveEnemies(int historyIndex, bool skipTurrets)
 {
 	local int iActive, AlertLevel, DataID;
 	local array<XComGameState_Unit> arrUnits;
@@ -64,7 +64,7 @@ static function int GetActiveEnemies(XComGameState gameState, bool skipTurrets)
 	GetOpponentUnits(arrUnits, skipTurrets);
 	ForEach arrUnits(arrUnit) 
 	{
-		currentUnit = XComGameState_Unit(gameState.GetGameStateForObjectID(arrUnit.ObjectID));
+		currentUnit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(arrUnit.ObjectID, eReturnType_Reference, historyIndex));
 		if(currentUnit == none)
 		{
 			continue;
@@ -86,7 +86,7 @@ static function int GetActiveEnemies(XComGameState gameState, bool skipTurrets)
 			DataID = currentUnit.GetAIUnitDataID();
 			if( DataID > 0 )
 			{
-				AIData = XComGameState_AIUnitData(gameState.GetGameStateForObjectID(DataID));
+				AIData = XComGameState_AIUnitData(`XCOMHISTORY.GetGameStateForObjectID(DataID, eReturnType_Reference, historyIndex));
 				if( AIData != none && AIData.HasAbsoluteKnowledge(KnowledgeRef) )  
 				{
 					iActive++;
@@ -98,29 +98,14 @@ static function int GetActiveEnemies(XComGameState gameState, bool skipTurrets)
 	return iActive;
 }
 
-static function bool GetClassFromGameState(XComGameState GameState, class<object> SearchClass, out object GameStateObject)
-{
-	foreach GameState.IterateByClassType(SearchClass, GameStateObject)
-	{
-		break;
-	}
-
-	if(GameStateObject == none)
-	{
-		return false;
-	}
-
-	return true;
-}
-
 static function bool GetTransferMissionStats(out int seen, out int killed)
 {
-	local XComGameState_BattleData StaticBattleData;
-	StaticBattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
-	if(StaticBattleData.DirectTransferInfo.IsDirectMissionTransfer)
+	local XComGameState_BattleData BattleData;
+	BattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	if(BattleData.DirectTransferInfo.IsDirectMissionTransfer)
 	{
-		seen = StaticBattleData.DirectTransferInfo.AliensSeen;
-		killed = StaticBattleData.DirectTransferInfo.AliensKilled;
+		seen = BattleData.DirectTransferInfo.AliensSeen;
+		killed = BattleData.DirectTransferInfo.AliensKilled;
 		return true;
 	}
 	
