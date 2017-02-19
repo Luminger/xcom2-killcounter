@@ -11,24 +11,29 @@ var bool ShowActive;
 var bool ShowRemaining;
 var bool SkipTurrets;
 
-var int LastRealizedIndex;
 var int LastKilled;
 var int LastActive;
 var int LastTotal;
 
+var int LastRealizedIndex;
+var array<int> MissingGameStates;
+var int HighestMissingIndex;
+var int HighestSeenIndex;
+
 event OnInit(UIScreen Screen)
 {
-	local XComGameState gameState;
+	//local XComGameState gameState;
 
 	ShowTotal = ShouldDrawTotalCount();
 	ShowActive = ShouldDrawActiveCount();
 	ShowRemaining = ShouldDrawRemainingCount();
 	SkipTurrets = ShouldSkipTurrets();
-	LastRealizedIndex = `XCOMHISTORY.GetCurrentHistoryIndex();
+	//LastRealizedIndex = `XCOMHISTORY.GetCurrentHistoryIndex();
+	//HighestSeenGameState = LastRealizedIndex;
 
 	RegisterEvents();
-	gameState = `XCOMHISTORY.GetGameStateFromHistory(LastRealizedIndex, eReturnType_Copy, false);
-	UpdateUI(gameState);
+	//gameState = `XCOMHISTORY.GetGameStateFromHistory(LastRealizedIndex, eReturnType_Copy, false);
+	//UpdateUI(gameState);
 }
 
 event OnRemoved(UIScreen Screen)
@@ -40,14 +45,24 @@ event OnRemoved(UIScreen Screen)
 event OnVisualizationBlockComplete(XComGameState AssociatedGameState)
 {
 	local XComGameState usedGameState;
+	local int logIndex;
+	local bool useIndex;
 
-	return;
+	useIndex = ShouldGivenGameStateBeUsed(AssociatedGameState.HistoryIndex);
 
-	`log("Given Index: " @ string(AssociatedGameState.HistoryIndex) @ " Last seen: " @ string(LastRealizedIndex));
-	// We need a little 'wiggle' room here
-	if(AssociatedGameState.HistoryIndex > LastRealizedIndex + 3)
+	`log("GivenIndex: " @ string(AssociatedGameState.HistoryIndex));
+	`log("Result: " @ string(useIndex));
+	`log("LastRealizedIndex: " @ string(LastRealizedIndex));
+	`log("MissingGameStates: ");
+	ForEach MissingGameStates(logIndex)
 	{
-		`log("We would spoiler, don't do that!");
+		`log(" => " @ string(logIndex));
+	}
+	`log("HighestSeenIndex: " @ string(HighestSeenIndex));
+	`log("HighestMissingIndex: " @ string(HighestMissingIndex));
+
+	if(!useIndex)
+	{
 		return;
 	}
 
@@ -66,19 +81,106 @@ event OnVisualizationBlockComplete(XComGameState AssociatedGameState)
 	LastRealizedIndex = AssociatedGameState.HistoryIndex;
 }
 
+function bool ShouldGivenGameStateBeUsed(int index)
+{
+	local int missing;
+	local int pos;
+
+	if(index == 0)
+	{
+		return false;
+	}
+
+	pos = MissingGameStates.Find(index);
+	if(pos != INDEX_NONE)
+	{
+		MissingGameStates.Remove(pos, 1);
+	}
+
+	if(index == LastRealizedIndex + 1 || LastRealizedIndex == -1)
+	{
+		LastRealizedIndex = index;
+		HighestSeenIndex = index;
+		return true;
+	}
+
+	if(index > HighestSeenIndex)
+	{
+		HighestSeenIndex = index;
+	}
+
+	if(index > HighestMissingIndex)
+	{
+		if(HighestMissingIndex == -1)
+		{
+			HighestMissingIndex = LastRealizedIndex;
+		}
+
+		for(missing = HighestMissingIndex + 1; missing < index; missing++)
+		{
+			if(!IsGameStateInterrupted(missing))
+			{
+				MissingGameStates.AddItem(missing);
+			}
+		}
+
+		HighestMissingIndex = index;
+	}
+
+	if(MissingGameStates.Length == 0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+function bool IsGameStateInterrupted(int index)
+{
+	local XComGameState gameState;
+	local XComGameStateContext context;
+
+	gameState = `XCOMHISTORY.GetGameStateFromHistory(index);
+	if(gameState == none)
+	{
+		return true;
+	}
+
+	context = gameState.GetContext();
+	if(context == none)
+	{
+		return true;
+	}
+
+	`log("Index: " @ string(index) @ " State: " @ string(context.InterruptionStatus));
+	`log("Index: " @ string(index) @ " is a '" @ string(context.Class) @ "'");
+	`log("Index: " @ string(index) @ " => " @ context.SummaryString());
+	`log("Index: " @ string(index) @ " => " @ context.VerboseDebugString());
+	return context.InterruptionStatus == eInterruptionStatus_Interrupt;
+}
+
 event OnVisualizationIdle()
 {
 	local XComGameState gameState;
 	local int index;
+	local bool ret;
+
+	ForEach MissingGameStates(index)
+	{
+		ret = IsGameStateInterrupted(index);
+	}
+	return;
+
+	LastRealizedIndex = -1;
+	HighestMissingIndex = -1;
+	HighestSeenIndex = -1;
+	MissingGameStates.Length = 0;
 
 	index = `XCOMHISTORY.GetCurrentHistoryIndex();
-
 	if (LastRealizedIndex != index)
 	{
-		`log("We have to fix the shown numbers, do it!");
 		gameState = `XCOMHISTORY.GetGameStateFromHistory(index, eReturnType_Copy, false);
 		UpdateUI(gameState);
-		LastRealizedIndex = index;
 	}
 }
 
@@ -189,8 +291,10 @@ defaultproperties
 	ShowActive = true;
 	ShowRemaining = true;
 	SkipTurrets = true;
-	LastRealizedIndex = -1;
 	LastKilled = -1;
 	LastActive = -1;
 	LastTotal = -1;
+	LastRealizedIndex = -1;
+	HighestMissingIndex = -1;
+	HighestSeenIndex = -1;
 }
