@@ -17,23 +17,18 @@ var int LastTotal;
 
 var int LastRealizedIndex;
 var array<int> MissingGameStates;
-var int HighestMissingIndex;
-var int HighestSeenIndex;
+var array<int> AlreadySeenIndexes;
+var bool FirstTime;
 
 event OnInit(UIScreen Screen)
 {
-	//local XComGameState gameState;
-
 	ShowTotal = ShouldDrawTotalCount();
 	ShowActive = ShouldDrawActiveCount();
 	ShowRemaining = ShouldDrawRemainingCount();
 	SkipTurrets = ShouldSkipTurrets();
-	//LastRealizedIndex = `XCOMHISTORY.GetCurrentHistoryIndex();
-	//HighestSeenGameState = LastRealizedIndex;
 
 	RegisterEvents();
-	//gameState = `XCOMHISTORY.GetGameStateFromHistory(LastRealizedIndex, eReturnType_Copy, false);
-	//UpdateUI(gameState);
+	FirstTime = true;
 }
 
 event OnRemoved(UIScreen Screen)
@@ -45,21 +40,30 @@ event OnRemoved(UIScreen Screen)
 event OnVisualizationBlockComplete(XComGameState AssociatedGameState)
 {
 	local XComGameState usedGameState;
-	local int logIndex;
+	//local int logIndex;
 	local bool useIndex;
+
+	if(FirstTime)
+	{
+		`log("First Trigger skipped!");
+		FirstTime = false;
+		return;
+	}
 
 	useIndex = ShouldGivenGameStateBeUsed(AssociatedGameState.HistoryIndex);
 
-	`log("GivenIndex: " @ string(AssociatedGameState.HistoryIndex));
-	`log("Result: " @ string(useIndex));
-	`log("LastRealizedIndex: " @ string(LastRealizedIndex));
-	`log("MissingGameStates: ");
-	ForEach MissingGameStates(logIndex)
-	{
-		`log(" => " @ string(logIndex));
-	}
-	`log("HighestSeenIndex: " @ string(HighestSeenIndex));
-	`log("HighestMissingIndex: " @ string(HighestMissingIndex));
+	//`log("/---------------------------------------------------\\");
+	//`log("GivenIndex: " @ string(AssociatedGameState.HistoryIndex));
+	//`log("Result: " @ string(useIndex));
+	//`log("LastRealizedIndex: " @ string(LastRealizedIndex));
+	//`log("AlreadySeenIndexes: ");
+	//ForEach AlreadySeenIndexes(logIndex)
+	//{
+	//	`log(" => " @ string(logIndex) @ `XCOMHISTORY.GetGameStateFromHistory(logIndex, eReturnType_Copy, false).GetContext().SummaryString());
+	//
+	//}
+
+	//`log("\\---------------------------------------------------/");
 
 	if(!useIndex)
 	{
@@ -76,15 +80,125 @@ event OnVisualizationBlockComplete(XComGameState AssociatedGameState)
 		}
 	}
 
-	`log("Updating UI...");
 	UpdateUI(usedGameState);
-	LastRealizedIndex = AssociatedGameState.HistoryIndex;
+	//LastRealizedIndex = AssociatedGameState.HistoryIndex;
+}
+
+function int sortIntArrayAsc(int a, int b)
+{
+	return b - a;
+}
+
+function int findFirstNonInterruptedFrame(int start)
+{
+	local int frame;
+	for(frame = start; frame > 0; frame++)
+	{
+		if(!IsGameStateInterrupted(frame))
+		{
+			return frame;
+		}
+	}
+}
+
+function int findLastNonInterruptedFrame(int start)
+{
+	local int frame;
+	for(frame = start; frame > 0; frame--)
+	{
+		if(!IsGameStateInterrupted(frame))
+		{
+			return frame;
+		}
+	}
+
+	return -1;
+}
+
+function int findInterruptCountBetween(int start, int end)
+{
+	local int interrupted, i;
+
+	interrupted = 0;
+	for(i = start; i < end; i++)
+	{
+		if(IsGameStateInterrupted(i))
+		{
+			interrupted++;
+		}
+	}
+
+	return interrupted;
 }
 
 function bool ShouldGivenGameStateBeUsed(int index)
 {
+	local int startPos, endPos;
+	local int startIndex, endIndex;
+	local int interrupted;
+	local int logIndex;
+	local string logStr;
+
+	`log("Index: " @ string(index) @ "LastRealizedIndex: " @ string(LastRealizedIndex));
+	if(index == LastRealizedIndex + 1 || LastRealizedIndex == -1)
+	{
+		LastRealizedIndex = index;
+		`log("Ret: True (1)");
+		return true;
+	}
+
+	AlreadySeenIndexes.AddItem(index);
+	AlreadySeenIndexes.Sort(sortIntArrayAsc);
+
+	startIndex = findFirstNonInterruptedFrame(LastRealizedIndex + 1);
+	endIndex = findLastNonInterruptedFrame(index);
+
+	startPos = AlreadySeenIndexes.Find(startIndex);
+	endPos = AlreadySeenIndexes.Find(index);
+
+	`log("startIndex: " @ startIndex @ "endIndex: " @ endIndex);
+	`log("startPos: " @ startPos @ " endPos: " @ endPos);
+	if (startPos == INDEX_NONE || endPos == INDEX_NONE)
+	{
+		`log("Ret: False (2)");
+		return false;
+	}
+
+	interrupted = findInterruptCountBetween(LastRealizedIndex + 1, index);
+	`log("Interrupted between " @ string(LastRealizedIndex + 1) @ " and " @ string(index) @ ":" @ string(interrupted));
+
+	`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - LastRealizedIndex + 1)));
+	if ((endPos - startPos + interrupted) == (index - LastRealizedIndex + 1))
+	{
+		logStr = "Pre remove:";
+		ForEach AlreadySeenIndexes(logIndex)
+		{
+			logStr @= string(logIndex);
+		}
+		`log(logStr);
+
+		AlreadySeenIndexes.Remove(startPos, endPos - startPos + 1);
+		LastRealizedIndex = index;
+
+		logstr = "Post remove:";
+		ForEach AlreadySeenIndexes(logIndex)
+		{
+			logStr @= string(logIndex);
+		}
+		`log(logStr);
+		`log("Ret: True (3)");
+		return true;
+	}
+
+	`log("Ret: False (4)");
+	return false;
+}
+
+function bool ShouldGivenGameStateBeUsed_old(int index)
+{
 	local int missing;
 	local int pos;
+	local int highestMissingIndex;
 
 	if(index == 0)
 	{
@@ -100,31 +214,36 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	if(index == LastRealizedIndex + 1 || LastRealizedIndex == -1)
 	{
 		LastRealizedIndex = index;
-		HighestSeenIndex = index;
 		return true;
 	}
 
-	if(index > HighestSeenIndex)
+	if(MissingGameStates.Length == 0)
 	{
-		HighestSeenIndex = index;
+		highestMissingIndex = LastRealizedIndex;
+	}
+	else
+	{
+		highestMissingIndex = MissingGameStates[MissingGameStates.Length-1];
 	}
 
-	if(index > HighestMissingIndex)
+	if(index > highestMissingIndex)
 	{
-		if(HighestMissingIndex == -1)
-		{
-			HighestMissingIndex = LastRealizedIndex;
-		}
-
-		for(missing = HighestMissingIndex + 1; missing < index; missing++)
+		for(missing = highestMissingIndex + 1; missing < index; missing++)
 		{
 			if(!IsGameStateInterrupted(missing))
 			{
-				MissingGameStates.AddItem(missing);
+				if(MissingGameStates.Find(missing) == INDEX_NONE)
+				{
+					MissingGameStates.AddItem(missing);
+				}
+			}
+			else
+			{
+				`log("Won't add " @ missing @ " as it was interrupted");
 			}
 		}
 
-		HighestMissingIndex = index;
+		MissingGameStates.Sort(sortIntArrayAsc);
 	}
 
 	if(MissingGameStates.Length == 0)
@@ -152,36 +271,38 @@ function bool IsGameStateInterrupted(int index)
 		return true;
 	}
 
-	`log("Index: " @ string(index) @ " State: " @ string(context.InterruptionStatus));
-	`log("Index: " @ string(index) @ " is a '" @ string(context.Class) @ "'");
-	`log("Index: " @ string(index) @ " => " @ context.SummaryString());
-	`log("Index: " @ string(index) @ " => " @ context.VerboseDebugString());
 	return context.InterruptionStatus == eInterruptionStatus_Interrupt;
 }
 
 event OnVisualizationIdle()
 {
 	local XComGameState gameState;
-	local int index;
-	local bool ret;
-
-	ForEach MissingGameStates(index)
-	{
-		ret = IsGameStateInterrupted(index);
-	}
-	return;
-
-	LastRealizedIndex = -1;
-	HighestMissingIndex = -1;
-	HighestSeenIndex = -1;
-	MissingGameStates.Length = 0;
+	local int index, cur;
 
 	index = `XCOMHISTORY.GetCurrentHistoryIndex();
-	if (LastRealizedIndex != index)
+	for(cur = index; cur > index - 100; cur--)
 	{
-		gameState = `XCOMHISTORY.GetGameStateFromHistory(index, eReturnType_Copy, false);
-		UpdateUI(gameState);
+		gameState = `XCOMHISTORY.GetGameStateFromHistory(cur);
+		`log(cur @ gameState.GetContext().SummaryString());
 	}
+
+	return;
+	if (MissingGameStates.Length == 0)
+	{
+		// Nothing to do this time.
+		//return;
+	}
+
+	// As things are probably out of sync, force a resync whenever the Visualizer is idle again
+	`log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX - WE ARE IDLE AND NEED TO CLEAN UP STUFF!");
+
+	LastRealizedIndex = -1;
+	MissingGameStates.Length = 0;
+	AlreadySeenIndexes.Length = 0;
+
+	index = `XCOMHISTORY.GetCurrentHistoryIndex();
+	gameState = `XCOMHISTORY.GetGameStateFromHistory(index, eReturnType_Copy, false);
+	UpdateUI(gameState);
 }
 
 event OnActiveUnitChanged(XComGameState_Unit NewActiveUnit);
@@ -252,6 +373,8 @@ function UpdateUI(XComGameState gameState)
 		LastKilled = killed;
 		LastActive = active;
 		LastTotal = total;
+
+		`log("Killed:" @ killed @ "Active:" @ active @ "Total:" @ total); 
 	}
 }
 
@@ -295,6 +418,5 @@ defaultproperties
 	LastActive = -1;
 	LastTotal = -1;
 	LastRealizedIndex = -1;
-	HighestMissingIndex = -1;
-	HighestSeenIndex = -1;
+	FirstTime = true;
 }
