@@ -105,11 +105,11 @@ function bool ShouldGivenGameStateBeUsed(int index)
 		return false;
 	}
 
-	interrupted = findInterruptCountBetween(LastRealizedIndex + 1, index);
-	`log("Interrupted between " @ string(LastRealizedIndex + 1) @ " and " @ string(index) @ ":" @ string(interrupted));
+	interrupted = findInterruptCountBetween(startIndex, index);
+	`log("Interrupted between " @ string(startIndex) @ " and " @ string(index) @ ":" @ string(interrupted));
 
-	`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - LastRealizedIndex + 1)));
-	if ((endPos - startPos + interrupted) == (index - LastRealizedIndex + 1))
+	`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
+	if ((endPos - startPos + interrupted) == (index - startIndex))
 	{
 		logStr = "Pre remove:";
 		ForEach AlreadySeenIndexes(logIndex)
