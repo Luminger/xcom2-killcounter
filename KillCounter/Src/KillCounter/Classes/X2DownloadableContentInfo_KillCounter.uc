@@ -16,7 +16,8 @@ class X2DownloadableContentInfo_KillCounter extends X2DownloadableContentInfo;
 /// create without the content installed. Subsequent saves will record that the content was installed.
 /// </summary>
 static event OnLoadedSavedGame()
-{}
+{
+}
 
 /// <summary>
 /// Called when the player starts a new campaign while this DLC / Mod is installed

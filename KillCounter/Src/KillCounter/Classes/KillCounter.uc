@@ -26,8 +26,15 @@ event OnInit(UIScreen Screen)
 	ShowRemaining = ShouldDrawRemainingCount();
 	SkipTurrets = ShouldSkipTurrets();
 
-	RegisterEvents();
+	// Reset is needed here for a load from Tactical to Tactical
+	LastKilled = -1;
+	LastActive = -1;
+	LastTotal = -1;
 	FirstTime = true;
+	LastRealizedIndex = -1;
+	AlreadySeenIndexes.Length = 0;
+
+	RegisterEvents();
 }
 
 event OnRemoved(UIScreen Screen)
@@ -61,7 +68,7 @@ function int sortIntArrayAsc(int a, int b)
 function bool ShouldGivenGameStateBeUsed(int index)
 {
 	local int startPos, endPos;
-	local int startIndex, endIndex;
+	local int startIndex;
 	local int interrupted;
 	local int logIndex;
 	local string logStr;
@@ -74,20 +81,27 @@ function bool ShouldGivenGameStateBeUsed(int index)
 		return true;
 	}
 
+	startIndex = findFirstNonInterruptedFrame(LastRealizedIndex + 1);
+
+	// Special Case: The frame(s) we didn't saw will never come as they were interrupted
+	if(startIndex == index)
+	{
+		LastRealizedIndex = index;
+		`log("Reg: True (2)");
+		return true;
+	}
+
 	AlreadySeenIndexes.AddItem(index);
 	AlreadySeenIndexes.Sort(sortIntArrayAsc);
-
-	startIndex = findFirstNonInterruptedFrame(LastRealizedIndex + 1);
-	endIndex = findLastNonInterruptedFrame(index);
 
 	startPos = AlreadySeenIndexes.Find(startIndex);
 	endPos = AlreadySeenIndexes.Find(index);
 
-	`log("startIndex: " @ startIndex @ "endIndex: " @ endIndex);
+	`log("startIndex: " @ startIndex);
 	`log("startPos: " @ startPos @ " endPos: " @ endPos);
 	if (startPos == INDEX_NONE || endPos == INDEX_NONE)
 	{
-		`log("Ret: False (2)");
+		`log("Ret: False (3)");
 		return false;
 	}
 
@@ -113,11 +127,11 @@ function bool ShouldGivenGameStateBeUsed(int index)
 			logStr @= string(logIndex);
 		}
 		`log(logStr);
-		`log("Ret: True (3)");
+		`log("Ret: True (4)");
 		return true;
 	}
 
-	`log("Ret: False (4)");
+	`log("Ret: False (5)");
 	return false;
 }
 
@@ -131,20 +145,6 @@ function int findFirstNonInterruptedFrame(int start)
 			return frame;
 		}
 	}
-}
-
-function int findLastNonInterruptedFrame(int start)
-{
-	local int frame;
-	for(frame = start; frame > 0; frame--)
-	{
-		if(!IsGameStateInterrupted(frame))
-		{
-			return frame;
-		}
-	}
-
-	return -1;
 }
 
 function int findInterruptCountBetween(int start, int end)
@@ -186,13 +186,31 @@ function bool IsGameStateInterrupted(int index)
 event OnVisualizationIdle()
 {
 	local XComGameState gameState;
-	local int index, cur;
+	local int startIndex, endIndex, cur;
 
-	index = `XCOMHISTORY.GetCurrentHistoryIndex();
-	for(cur = index; cur > index - 100; cur--)
+	`log("XXXX History Dump");
+	startIndex = `XCOMHISTORY.GetCurrentHistoryIndex();
+	for(cur = startIndex; cur > startIndex - 100 && cur > 0; cur--)
 	{
 		gameState = `XCOMHISTORY.GetGameStateFromHistory(cur);
 		`log(cur @ gameState.GetContext().SummaryString());
+	}
+
+	if(AlreadySeenIndexes.Length == 0)
+	{
+		return;
+	}
+
+	`log("XXXX AlreadySeen Debug Dump");
+	startIndex = LastRealizedIndex + 1;
+	endIndex = AlreadySeenIndexes[AlreadySeenIndexes.Length - 1];
+	for(cur = startIndex; cur <= endIndex; cur++)
+	{
+		gameState = `XCOMHISTORY.GetGameStateFromHistory(cur);
+		if(AlreadySeenIndexes.Find(cur) == INDEX_NONE && !IsGameStateInterrupted(cur))
+		{
+			`log(cur @ gameState.GetContext().SummaryString());
+		}
 	}
 }
 
