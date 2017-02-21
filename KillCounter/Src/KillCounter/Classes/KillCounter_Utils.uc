@@ -211,3 +211,28 @@ static function TestValueOnPanel(UIPanel panel, string prop)
 		`Log("Type:" @ val.Type @ "Value:" @ val.s);
 	}
 }
+
+static function bool IsGameStateInterrupted(int index)
+{
+	local XComGameState gameState;
+	local XComGameStateContext context;
+
+	gameState = `XCOMHISTORY.GetGameStateFromHistory(index);
+	if(gameState == none)
+	{
+		return true;
+	}
+
+	context = gameState.GetContext();
+	if(context == none)
+	{
+		return true;
+	}
+
+	// There are certain frames which are flagged as an Interrupt but at the
+	// same time those don't have a ResumeHistoryIndex set. This causes them
+	// to get handed to us even though they were interrupted. To fix this
+	// possible missmatch we do not count those frame as 'interrupted' as 
+	// this would mean that we do not expect to ever see them.
+	return context.InterruptionStatus == eInterruptionStatus_Interrupt && context.ResumeHistoryIndex != -1;
+}
