@@ -150,7 +150,7 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// given index. Simple, isn't it? *cough*
 	`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
 
-	// Normally I wouldn't want to habe a >= here but a ==. But it turned out
+	// Normally I wouldn't want to have a >= here but a ==. But it turned out
 	// that there is a case where an unexpected frame turned up in the list
 	// even though it wasn't expected. Having a >= doesn't hurt as long as the
 	// rest of the calculation is correct as 'too much' isn't really a big deal,
@@ -207,23 +207,6 @@ function int findInterruptCountBetween(int start, int end)
 
 event OnVisualizationIdle()
 {
-       local XComGameState gameState;
-       local int startIndex, cur;
-	   local string logStr;
-
-       `log("XXXX History Dump");
-       startIndex = `XCOMHISTORY.GetCurrentHistoryIndex();
-       for(cur = startIndex; cur > startIndex - 100 && cur > 0; cur--)
-       {
-               gameState = `XCOMHISTORY.GetGameStateFromHistory(cur);
-			   logStr = string(cur);
-			   logStr @= string(gameState.GetContext().InterruptionStatus);
-			   logStr @= string(gameState.GetContext().InterruptionHistoryIndex);
-			   logStr @= string(gameState.GetContext().ResumeHistoryIndex);
-			   logStr @= gameState.GetContext().SummaryString();
-               `log(logStr);
-       }
-
 }
 
 event OnActiveUnitChanged(XComGameState_Unit NewActiveUnit);
