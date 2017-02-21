@@ -3,15 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # XCOM ModBuddy Solution File, Format Version 11.00
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{5DAE07AF-E217-45C1-8DE7-FF99D6011E8A}") = "KillCounter", "KillCounter\KillCounter.x2proj", "{61C6A909-87B6-411D-BE42-85AD92C17A83}"
+Project("{5DAE07AF-E217-45C1-8DE7-FF99D6011E8A}") = "KillCounter", "KillCounter\KillCounter.x2proj", "{977ACD00-98B7-431F-9C9A-C3F9C5C6DDF5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|XCOM 2 = Debug|XCOM 2
 		Default|XCOM 2 = Default|XCOM 2
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{61C6A909-87B6-411D-BE42-85AD92C17A83}.Default|XCOM 2.ActiveCfg = Default|XCOM 2
-		{61C6A909-87B6-411D-BE42-85AD92C17A83}.Default|XCOM 2.Build.0 = Default|XCOM 2
+		{977ACD00-98B7-431F-9C9A-C3F9C5C6DDF5}.Debug|XCOM 2.ActiveCfg = Default|XCOM 2
+		{977ACD00-98B7-431F-9C9A-C3F9C5C6DDF5}.Debug|XCOM 2.Build.0 = Default|XCOM 2
+		{977ACD00-98B7-431F-9C9A-C3F9C5C6DDF5}.Default|XCOM 2.ActiveCfg = Default|XCOM 2
+		{977ACD00-98B7-431F-9C9A-C3F9C5C6DDF5}.Default|XCOM 2.Build.0 = Default|XCOM 2
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

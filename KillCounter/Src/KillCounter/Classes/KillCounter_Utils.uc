@@ -24,16 +24,22 @@ static function int GetTotalEnemies(bool skipTurrets)
 	return iTotal;
 }
 
-static function int GetKilledEnemies(bool skipTurrets)
+static function int GetKilledEnemies(int historyIndex, bool skipTurrets)
 {
 	local int iKilled, iPrevSeen, iPrevKilled;
 	local array<XComGameState_Unit> arrUnits;
-	local XComGameState_Unit arrUnit;
+	local XComGameState_Unit arrUnit, currentUnit;
 
 	GetOpponentUnits(arrUnits, skipTurrets);
 	ForEach arrUnits(arrUnit) 
 	{
-		if(arrUnit.IsDead()) 
+		currentUnit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(arrUnit.ObjectID, eReturnType_Reference, historyIndex));
+		if(currentUnit == none)
+		{
+			continue;
+		}
+
+		if(currentUnit.IsDead()) 
 		{
 			iKilled++;
 		}
@@ -47,38 +53,41 @@ static function int GetKilledEnemies(bool skipTurrets)
 	return iKilled;
 }
 
-static function int GetActiveEnemies(bool skipTurrets)
+static function int GetActiveEnemies(int historyIndex, bool skipTurrets)
 {
 	local int iActive, AlertLevel, DataID;
 	local array<XComGameState_Unit> arrUnits;
-	local XComGameState_Unit arrUnit;
-	local XComGameStateHistory History;
+	local XComGameState_Unit arrUnit, currentUnit;
 	local XComGameState_AIUnitData AIData;
 	local StateObjectReference KnowledgeRef;
 
-	History = `XCOMHISTORY;
 	GetOpponentUnits(arrUnits, skipTurrets);
-
 	ForEach arrUnits(arrUnit) 
 	{
-		// Code originates from XComGameState_AIGroup::IsEngaged()
-		if(!arrUnit.IsAlive())
+		currentUnit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(arrUnit.ObjectID, eReturnType_Reference, historyIndex));
+		if(currentUnit == none)
 		{
 			continue;
 		}
 
-		AlertLevel = arrUnit.GetCurrentStat(eStat_AlertLevel);
+		// Code originates from XComGameState_AIGroup::IsEngaged()
+		if(!currentUnit.IsAlive())
+		{
+			continue;
+		}
+
+		AlertLevel = currentUnit.GetCurrentStat(eStat_AlertLevel);
 		if(AlertLevel == `ALERT_LEVEL_RED)
 		{
 			iActive++;
 		}
 		else if (AlertLevel == `ALERT_LEVEL_YELLOW)
 		{
-			DataID = arrUnit.GetAIUnitDataID();
+			DataID = currentUnit.GetAIUnitDataID();
 			if( DataID > 0 )
 			{
-				AIData = XComGameState_AIUnitData(History.GetGameStateForObjectID(DataID));
-				if( AIData.HasAbsoluteKnowledge(KnowledgeRef) )  
+				AIData = XComGameState_AIUnitData(`XCOMHISTORY.GetGameStateForObjectID(DataID, eReturnType_Reference, historyIndex));
+				if( AIData != none && AIData.HasAbsoluteKnowledge(KnowledgeRef) )  
 				{
 					iActive++;
 				}
@@ -91,12 +100,12 @@ static function int GetActiveEnemies(bool skipTurrets)
 
 static function bool GetTransferMissionStats(out int seen, out int killed)
 {
-	local XComGameState_BattleData StaticBattleData;
-	StaticBattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
-	if(StaticBattleData.DirectTransferInfo.IsDirectMissionTransfer)
+	local XComGameState_BattleData BattleData;
+	BattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	if(BattleData.DirectTransferInfo.IsDirectMissionTransfer)
 	{
-		seen = StaticBattleData.DirectTransferInfo.AliensSeen;
-		killed = StaticBattleData.DirectTransferInfo.AliensKilled;
+		seen = BattleData.DirectTransferInfo.AliensSeen;
+		killed = BattleData.DirectTransferInfo.AliensKilled;
 		return true;
 	}
 	
@@ -201,4 +210,29 @@ static function TestValueOnPanel(UIPanel panel, string prop)
 	{
 		`Log("Type:" @ val.Type @ "Value:" @ val.s);
 	}
+}
+
+static function bool IsGameStateInterrupted(int index)
+{
+	local XComGameState gameState;
+	local XComGameStateContext context;
+
+	gameState = `XCOMHISTORY.GetGameStateFromHistory(index);
+	if(gameState == none)
+	{
+		return true;
+	}
+
+	context = gameState.GetContext();
+	if(context == none)
+	{
+		return true;
+	}
+
+	// There are certain frames which are flagged as an Interrupt but at the
+	// same time those don't have a ResumeHistoryIndex set. This causes them
+	// to get handed to us even though they were interrupted. To fix this
+	// possible missmatch we do not count those frame as 'interrupted' as 
+	// this would mean that we do not expect to ever see them.
+	return context.InterruptionStatus == eInterruptionStatus_Interrupt && context.ResumeHistoryIndex != -1;
 }
