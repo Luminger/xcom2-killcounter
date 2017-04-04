@@ -108,6 +108,14 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// our calculations on.
 	startIndex = findFirstNonInterruptedFrame(LastRealizedIndex + 1);
 
+	// Special Case: There is no frame in the future which is considered
+	// uninterrupted. In this case the firstNonInterruptedFrame is the
+	// LastRealizedIndex per definition.
+	if(startIndex == -1)
+	{
+		startIndex = LastRealizedIndex;
+	}
+
 	// Special Case: The frame(s) we didn't saw will never come as they were
 	// interrupted. This saves us from doing the definately more expensive
 	// Code further down.
@@ -180,13 +188,15 @@ function bool ShouldGivenGameStateBeUsed(int index)
 function int findFirstNonInterruptedFrame(int start)
 {
 	local int frame;
-	for(frame = start; frame > 0; frame++)
+	for(frame = start; frame <= `XCOMHISTORY.GetCurrentHistoryIndex(); frame++)
 	{
 		if(!class'KillCounter_Utils'.static.IsGameStateInterrupted(frame))
 		{
 			return frame;
 		}
 	}
+	
+	return -1;
 }
 
 function int findInterruptCountBetween(int start, int end)
