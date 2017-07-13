@@ -1,25 +1,23 @@
-class KillCounter_UI extends UIPanel config(KillCounter);
+class KillCounter_UI extends UIPanel;
 
 var localized string strKilled;
 var localized string strActive;
 var localized string strTotal;
 var localized string strRemaining;
 
-var config bool noColor;
-var config string textAlignment;
-var config int BoxAnchor;
-var config int OffsetX;
-var config int OffsetY;
+var KillCounter_Settings settings;
 
 var UIText Text;
 var UITextStyleObject TextStyle;
 
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
 {
+	settings = new class'KillCounter_Settings';
+
 	super.InitPanel(InitName, InitLibID);
-	self.SetAnchor(BoxAnchor);
+	self.SetAnchor(settings.BoxAnchor);
 	self.SetSize(350, 50);
-	self.SetPosition(OffsetX, OffsetY); 
+	self.SetPosition(settings.OffsetX, settings.OffsetY); 
 
 	Text = Spawn(class'UIText', self);
 	Text.InitText('KillCounter_Text');
@@ -28,7 +26,7 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	class'KillCounter_Utils'.static.ShadowToTextField(Text);
 
 	TextStyle = class'UIUtilities_Text'.static.GetStyle(eUITextStyle_Tooltip_H2);
-	TextStyle.Alignment = textAlignment;
+	TextStyle.Alignment = settings.textAlignment;
 	TextStyle.bUseCaps = False;
 
 	return self;
@@ -67,7 +65,7 @@ function UpdateText(int killed, int total, int active, bool showRemaining)
 
 function string AddColor(int value, int clr)
 {
-	if(noColor)
+	if(settings.noColor)
 	{
 		return string(value);
 	}

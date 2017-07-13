@@ -1,10 +1,6 @@
-class KillCounter extends UIScreenListener implements(X2VisualizationMgrObserverInterface) config(KillCounter);
+class KillCounter extends UIScreenListener implements(X2VisualizationMgrObserverInterface);
 
-var config bool neverShowEnemyTotal;
-var config bool neverShowActiveEnemyCount;
-var config bool alwaysShowEnemyTotal;
-var config bool showRemainingInsteadOfTotal;
-var config bool includeTurrets;
+var KillCounter_Settings settings;
 
 var bool ShowTotal;
 var bool ShowActive;
@@ -20,6 +16,8 @@ var array<int> AlreadySeenIndexes;
 
 event OnInit(UIScreen Screen)
 {
+	settings = new class'KillCounter_Settings';
+
 	ShowTotal = ShouldDrawTotalCount();
 	ShowActive = ShouldDrawActiveCount();
 	ShowRemaining = ShouldDrawRemainingCount();
@@ -292,11 +290,11 @@ function UpdateUI(int historyIndex)
 
 function bool ShouldDrawTotalCount()
 {
-	if(alwaysShowEnemyTotal)
+	if(settings.alwaysShowEnemyTotal)
 	{
 		return true;
 	}
-	else if(neverShowEnemyTotal) 
+	else if(settings.neverShowEnemyTotal) 
 	{
 		return false;
 	} 
@@ -306,17 +304,17 @@ function bool ShouldDrawTotalCount()
 
 function bool ShouldDrawActiveCount()
 {
-	return !neverShowActiveEnemyCount;
+	return settings.alwaysShowActiveEnemyCount;
 }
 
 function bool ShouldDrawRemainingCount()
 {
-	return showRemainingInsteadOfTotal;
+	return settings.showRemainingInsteadOfTotal;
 }
 
 function bool ShouldSkipTurrets()
 {
-	return !includeTurrets;
+	return !settings.includeTurrets;
 }
 
 defaultproperties
