@@ -17,6 +17,21 @@ var config int OffsetY;
 
 var config int CONFIG_VERSION;
 
+var KillCounter_Settings_Defaults defaultSettings;
+
+var MCM_API_Checkbox neverShowEnemyTotal_Checkbox;
+var MCM_API_Checkbox alwaysShowEnemyTotal_Checkbox;
+var MCM_API_Checkbox alwaysShowActiveEnemyCount_Checkbox;
+var MCM_API_Checkbox showRemainingInsteadOfTotal_Checkbox;
+var MCM_API_Checkbox includeTurrets_Checkbox;
+
+var MCM_API_Checkbox noColor_Checkbox;
+var MCM_API_Dropdown textAlignment_Dropdown;
+var MCM_API_Slider BoxAnchor_Slider;
+var MCM_API_Slider OffsetX_Slider;
+var MCM_API_Slider OffsetY_Slider;
+
+
 event OnInit(UIScreen Screen)
 {
 	if (MCM_API(Screen) != none)
@@ -45,36 +60,37 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
     Page = ConfigAPI.NewSettingsPage("KillCounter");
     Page.SetPageTitle("KillCounter");
     Page.SetSaveHandler(SaveButtonClicked);
+	Page.EnableResetButton(ResetButtonClicked);
     
 		// ---------------------------- General Settings ----------------------------- //
 
     Group = Page.AddGroup('Group1', "General Settings");
     
-    Group.AddCheckbox('neverShowEnemyTotal', 
+	neverShowEnemyTotal_Checkbox = Group.AddCheckbox('neverShowEnemyTotal', 
 		"NeverShowEnemyTotal", 
 		"The exact oposit from above - set it to true and you'll get the enemies total always even though you havn't build the ShadowChamber yet. Please note that this outrules the setting from above - this one takes precendence, always.",
 		neverShowEnemyTotal,
 		neverShowEnemyTotalSaveHandler);
 
-	Group.AddCheckbox('alwaysShowEnemyTotal', 
+	alwaysShowEnemyTotal_Checkbox = Group.AddCheckbox('alwaysShowEnemyTotal', 
 		"AlwaysShowEnemyTotal", 
 		"Setting this to true will never show you the total number of enemies in a mission, even when you have access to the ShadowChamber so you already know it.",
 		alwaysShowEnemyTotal,
 		alwaysShowEnemyTotalSaveHandler);
 
-	Group.AddCheckbox('alwaysShowActiveEnemyCount', 
+	alwaysShowActiveEnemyCount_Checkbox = Group.AddCheckbox('alwaysShowActiveEnemyCount', 
 		"AlwaysShowActiveEnemyCount", 
 		"If set to false, the total active enemy count is never shown.",
 		alwaysShowActiveEnemyCount,
 		alwaysShowActiveEnemyCountSaveHandler);
 
-	Group.AddCheckbox('showRemainingInsteadOfTotal', 
+	showRemainingInsteadOfTotal_Checkbox = Group.AddCheckbox('showRemainingInsteadOfTotal', 
 		"ShowRemainingInsteadOfTotal", 
 		"Some people like it this way, some the other. Set it to false and you'll get the total count of enemies, set it to true and you'll get the remaining count.",
 		showRemainingInsteadOfTotal,
 		showRemainingInsteadOfTotalSaveHandler);
 
-	Group.AddCheckbox('includeTurrets', 
+	includeTurrets_Checkbox = Group.AddCheckbox('includeTurrets', 
 		"IncludeTurrets", 
 		"As turrets don't count into the 'total enemies killed' at the end of the mission, we don't include them here as well by default. If you like, you can enable counting them.",
 		includeTurrets,
@@ -84,20 +100,20 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 
 	Group = Page.AddGroup('Group2', "UI Settings");
     
-    Group.AddCheckbox('noColor', 
+	noColor_Checkbox = Group.AddCheckbox('noColor', 
 		"NoColor", 
 		"Disable coloring of all numbers.",
 		noColor,
 		noColorSaveHandler);
 
-	Group.AddDropdown('textAlignment', 
+	textAlignment_Dropdown = Group.AddDropdown('textAlignment', 
 		"TextAlignment", 
 		"How the text is aligned witin the 'box'.",
 		textAlignmentOptions,
 		textAlignment,
 		textAlignmentSaveHandler);
 
-	Group.AddSlider('BoxAnchor', 
+	BoxAnchor_Slider = Group.AddSlider('BoxAnchor', 
 		"BoxAnchor", 
 		"Where the 'box' (which holds the text) is anchored on the screen (the whole screen).\nPossible values (straight from the UIUtilities class):\n0 (ANCHOR_NONE)\n1 (ANCHOR_TOP_LEFT)\n2 (ANCHOR_TOP_CENTER)\n3 (ANCHOR_TOP_RIGHT)\n4 (ANCHOR_MIDDLE_LEFT)\n5 (ANCHOR_MIDDLE_CENTER)\n6 (ANCHOR_MIDDLE_RIGHT)\n7 (ANCHOR_BOTTOM_LEFT)\n8 (ANCHOR_BOTTOM_CENTER)\n9 (ANCHOR_BOTTOM_RIGHT)",
 		0,	// Min
@@ -106,7 +122,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 		BoxAnchor,
 		BoxAnchorSaveHandler);
 
-	Group.AddSlider('OffsetX', 
+	OffsetX_Slider = Group.AddSlider('OffsetX', 
 		"OffsetX", 
 		"By how much the 'box' should be offset from its anchor on the X axis",
 		-1000,
@@ -115,7 +131,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 		OffsetX,
 		OffsetXSaveHandler);
 
-	Group.AddSlider('OffsetY', 
+	OffsetY_Slider = Group.AddSlider('OffsetY', 
 		"OffsetY", 
 		"By how much the 'box' should be offset from its anchor on the Y axis",
 		-1000,
@@ -160,6 +176,23 @@ simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 {
     self.CONFIG_VERSION = `MCM_CH_GetCompositeVersion();
     self.SaveConfig();
+}
+
+simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
+{
+	defaultSettings = new class'KillCounter_Settings_Defaults';
+
+	neverShowEnemyTotal_Checkbox.SetValue(defaultSettings.neverShowEnemyTotal, true);
+	alwaysShowEnemyTotal_Checkbox.SetValue(defaultSettings.alwaysShowEnemyTotal, true);
+	alwaysShowActiveEnemyCount_Checkbox.SetValue(defaultSettings.alwaysShowActiveEnemyCount, true);
+	showRemainingInsteadOfTotal_Checkbox.SetValue(defaultSettings.showRemainingInsteadOfTotal, true);
+	includeTurrets_Checkbox.SetValue(defaultSettings.includeTurrets, true);
+
+	noColor_Checkbox.SetValue(defaultSettings.noColor, true);
+	textAlignment_Dropdown.SetValue(defaultSettings.textAlignment, true);
+	BoxAnchor_Slider.SetValue(defaultSettings.BoxAnchor, true);
+	OffsetX_Slider.SetValue(defaultSettings.OffsetX, true);
+	OffsetY_Slider.SetValue(defaultSettings.OffsetY, true);
 }
 
 defaultproperties
