@@ -37,7 +37,8 @@ event OnInit(UIScreen Screen)
 	if (MCM_API(Screen) != none)
 	{
 		`MCM_API_Register(Screen, ClientModCallback);
-	} else if(CONFIG_VERSION == 0) 
+	} 
+	else if(CONFIG_VERSION == 0) 
 	{
 		LoadSavedSettings();
 		SaveButtonClicked(none);
@@ -59,8 +60,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
     
     Page = ConfigAPI.NewSettingsPage("KillCounter");
     Page.SetPageTitle("KillCounter");
-    Page.SetSaveHandler(SaveButtonClicked);
-	Page.EnableResetButton(ResetButtonClicked);
+	Page.SetSaveHandler(SaveButtonClicked);
     
 		// ---------------------------- General Settings ----------------------------- //
 
@@ -140,10 +140,34 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 		OffsetY,
 		OffsetYSaveHandler);
     
+	if (GameMode == eGameMode_MainMenu || GameMode == eGameMode_Strategy)
+    {
+		Page.EnableResetButton(ResetButtonClicked);
+	} 
+	else
+	{
+		SetEditable(Page, false);
+	}
+	
     Page.ShowSettings();
 }
 
 `MCM_CH_VersionChecker(class'KillCounter_Settings_Defaults'.default.CONFIG_VERSION,CONFIG_VERSION)
+
+simulated function SetEditable(MCM_API_SettingsPage Page, bool isEditable)
+{
+	local MCM_API_SettingsGroup Group;
+	local int groupCount, settingsCount;
+
+	for (groupCount = 0; groupCount < Page.GetGroupCount(); groupCount++)
+	{
+		Group = Page.GetGroupByIndex(groupCount);
+		for (settingsCount = 0; settingsCount < Group.GetNumberOfSettings(); settingsCount++)
+		{			
+			Group.GetSettingByIndex(settingsCount).SetEditable(isEditable);
+		}
+	}
+}
 
 simulated function LoadSavedSettings()
 {
@@ -174,7 +198,7 @@ simulated function LoadSavedSettings()
 
 simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 {
-    self.CONFIG_VERSION = `MCM_CH_GetCompositeVersion();
+	self.CONFIG_VERSION = `MCM_CH_GetCompositeVersion();
     self.SaveConfig();
 }
 
