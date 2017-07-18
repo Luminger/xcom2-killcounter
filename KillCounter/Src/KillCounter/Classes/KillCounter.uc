@@ -1,10 +1,7 @@
 class KillCounter extends UIScreenListener implements(X2VisualizationMgrObserverInterface);
 
-var KillCounter_Settings settings;
-
 var bool ShowTotal;
 var bool ShowActive;
-var bool ShowRemaining;
 var bool SkipTurrets;
 
 var int LastKilled;
@@ -15,13 +12,10 @@ var int LastRealizedIndex;
 var array<int> AlreadySeenIndexes;
 
 event OnInit(UIScreen Screen)
-{
-	settings = new class'KillCounter_Settings';
-
-	ShowTotal = ShouldDrawTotalCount();
-	ShowActive = ShouldDrawActiveCount();
-	ShowRemaining = ShouldDrawRemainingCount();
-	SkipTurrets = ShouldSkipTurrets();
+{	
+	ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
+	ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
+	SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
 
 	// Reset is needed here for a load from Tactical to Tactical as the
 	// current instance doesn't get destroyed - but OnInit is called
@@ -229,32 +223,10 @@ function UnregisterEvents()
 	`XCOMVISUALIZATIONMGR.RemoveObserver(self);
 }
 
-function KillCounter_UI GetUI()
-{
-	local UIScreen hud;
-	local KillCounter_UI ui;
-
-	hud = `PRES.GetTacticalHUD();
-	if (hud == none)
-	{
-		return none;
-	}
-
-	ui = KillCounter_UI(hud.GetChild('KillCounter_UI'));
-
-	if(ui == none)
-	{
-		ui = hud.Spawn(class'KillCounter_UI', hud);
-		ui.InitPanel('KillCounter_UI');
-	}
-
-	return ui;
-}
-
 function DestroyUI()
 {
 	local KillCounter_UI ui;
-	ui = GetUI();
+	ui = class'KillCounter_Utils'.static.GetUI();
 	if(ui == none)
 	{
 		return;
@@ -267,12 +239,16 @@ function UpdateUI(int historyIndex)
 {
 	local int killed, total, active;
 	local KillCounter_UI ui;
-	
-	ui = GetUI(); 
+
+	ui = class'KillCounter_Utils'.static.GetUI(); 
 	if(ui == none)
 	{
 		return;
 	}
+
+	ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
+	ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
+	SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
 
 	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
 	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
@@ -280,7 +256,7 @@ function UpdateUI(int historyIndex)
 
 	if (killed != LastKilled || active != LastActive || total != LastTotal)
 	{
-		ui.UpdateText(killed, total, active, ShowRemaining);
+		ui.UpdateText(killed, total, active, historyIndex);
 		
 		LastKilled = killed;
 		LastActive = active;
@@ -288,41 +264,11 @@ function UpdateUI(int historyIndex)
 	}
 }
 
-function bool ShouldDrawTotalCount()
-{
-	if(settings.alwaysShowEnemyTotal)
-	{
-		return true;
-	}
-	else if(settings.neverShowEnemyTotal) 
-	{
-		return false;
-	} 
-
-	return class'KillCounter_Utils'.static.IsShadowChamberBuild();
-}
-
-function bool ShouldDrawActiveCount()
-{
-	return settings.alwaysShowActiveEnemyCount;
-}
-
-function bool ShouldDrawRemainingCount()
-{
-	return settings.showRemainingInsteadOfTotal;
-}
-
-function bool ShouldSkipTurrets()
-{
-	return !settings.includeTurrets;
-}
-
 defaultproperties
 {
 	ScreenClass = class'UITacticalHUD';
 	ShowTotal = false;
 	ShowActive = true;
-	ShowRemaining = true;
 	SkipTurrets = true;
 	LastKilled = -1;
 	LastActive = -1;

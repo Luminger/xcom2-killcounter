@@ -236,3 +236,61 @@ static function bool IsGameStateInterrupted(int index)
 	// this would mean that we do not expect to ever see them.
 	return context.InterruptionStatus == eInterruptionStatus_Interrupt && context.ResumeHistoryIndex != -1;
 }
+
+static function KillCounter_UI GetUI()
+{
+	local UIScreen hud;
+	local KillCounter_UI ui;
+
+	hud = `PRES.GetTacticalHUD();
+	if (hud == none)
+	{
+		return none;
+	}
+
+	ui = KillCounter_UI(hud.GetChild('KillCounter_UI'));
+
+	if(ui == none)
+	{
+		ui = hud.Spawn(class'KillCounter_UI', hud);
+		ui.InitPanel('KillCounter_UI');
+	}
+
+	return ui;
+}
+
+static function bool ShouldDrawTotalCount()
+{
+	local KillCounter_Settings settings;
+
+	settings = new class'KillCounter_Settings';
+
+	if(settings.alwaysShowEnemyTotal)
+	{
+		return true;
+	}
+	else if(settings.neverShowEnemyTotal) 
+	{
+		return false;
+	} 
+
+	return class'KillCounter_Utils'.static.IsShadowChamberBuild();
+}
+
+static function bool ShouldDrawActiveCount()
+{
+	local KillCounter_Settings settings;
+
+	settings = new class'KillCounter_Settings';
+
+	return settings.alwaysShowActiveEnemyCount;
+}
+
+static function bool ShouldSkipTurrets()
+{
+	local KillCounter_Settings settings;
+
+	settings = new class'KillCounter_Settings';
+
+	return !settings.includeTurrets;
+}

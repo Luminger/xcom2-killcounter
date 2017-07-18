@@ -17,8 +17,6 @@ var config int OffsetY;
 
 var config int CONFIG_VERSION;
 
-var KillCounter_Settings_Defaults defaultSettings;
-
 var MCM_API_Checkbox neverShowEnemyTotal_Checkbox;
 var MCM_API_Checkbox alwaysShowEnemyTotal_Checkbox;
 var MCM_API_Checkbox alwaysShowActiveEnemyCount_Checkbox;
@@ -31,6 +29,7 @@ var MCM_API_Slider BoxAnchor_Slider;
 var MCM_API_Slider OffsetX_Slider;
 var MCM_API_Slider OffsetY_Slider;
 
+`MCM_CH_VersionChecker(class'KillCounter_Settings_Defaults'.default.CONFIG_VERSION,CONFIG_VERSION)
 
 event OnInit(UIScreen Screen)
 {
@@ -48,7 +47,7 @@ event OnInit(UIScreen Screen)
 simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 {
     local MCM_API_SettingsPage Page;
-    local MCM_API_SettingsGroup Group;
+    local MCM_API_SettingsGroup Group1, Group2;
 
 	local array<string> textAlignmentOptions;
     
@@ -61,36 +60,37 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
     Page = ConfigAPI.NewSettingsPage("KillCounter");
     Page.SetPageTitle("KillCounter");
 	Page.SetSaveHandler(SaveButtonClicked);
+	Page.EnableResetButton(ResetButtonClicked);
     
 		// ---------------------------- General Settings ----------------------------- //
 
-    Group = Page.AddGroup('Group1', "General Settings");
+    Group1 = Page.AddGroup('Group1', "General Settings");
     
-	neverShowEnemyTotal_Checkbox = Group.AddCheckbox('neverShowEnemyTotal', 
+	neverShowEnemyTotal_Checkbox = Group1.AddCheckbox('neverShowEnemyTotal', 
 		"NeverShowEnemyTotal", 
-		"The exact oposit from above - set it to true and you'll get the enemies total always even though you havn't build the ShadowChamber yet. Please note that this outrules the setting from above - this one takes precendence, always.",
+		"Setting this to true will never show you the total number of enemies in a mission, even when you have access to the ShadowChamber so you already know it.",
 		neverShowEnemyTotal,
 		neverShowEnemyTotalSaveHandler);
 
-	alwaysShowEnemyTotal_Checkbox = Group.AddCheckbox('alwaysShowEnemyTotal', 
+	alwaysShowEnemyTotal_Checkbox = Group1.AddCheckbox('alwaysShowEnemyTotal', 
 		"AlwaysShowEnemyTotal", 
-		"Setting this to true will never show you the total number of enemies in a mission, even when you have access to the ShadowChamber so you already know it.",
+		"The exact oposit from above - set it to true and you'll get the enemies total always even though you havn't build the ShadowChamber yet. Please note that this outrules the setting from above - this one takes precendence, always.",
 		alwaysShowEnemyTotal,
 		alwaysShowEnemyTotalSaveHandler);
 
-	alwaysShowActiveEnemyCount_Checkbox = Group.AddCheckbox('alwaysShowActiveEnemyCount', 
+	alwaysShowActiveEnemyCount_Checkbox = Group1.AddCheckbox('alwaysShowActiveEnemyCount', 
 		"AlwaysShowActiveEnemyCount", 
 		"If set to false, the total active enemy count is never shown.",
 		alwaysShowActiveEnemyCount,
 		alwaysShowActiveEnemyCountSaveHandler);
 
-	showRemainingInsteadOfTotal_Checkbox = Group.AddCheckbox('showRemainingInsteadOfTotal', 
+	showRemainingInsteadOfTotal_Checkbox = Group1.AddCheckbox('showRemainingInsteadOfTotal', 
 		"ShowRemainingInsteadOfTotal", 
 		"Some people like it this way, some the other. Set it to false and you'll get the total count of enemies, set it to true and you'll get the remaining count.",
 		showRemainingInsteadOfTotal,
 		showRemainingInsteadOfTotalSaveHandler);
 
-	includeTurrets_Checkbox = Group.AddCheckbox('includeTurrets', 
+	includeTurrets_Checkbox = Group1.AddCheckbox('includeTurrets', 
 		"IncludeTurrets", 
 		"As turrets don't count into the 'total enemies killed' at the end of the mission, we don't include them here as well by default. If you like, you can enable counting them.",
 		includeTurrets,
@@ -98,22 +98,22 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 
 		// ---------------------------- UI Settings ----------------------------- //
 
-	Group = Page.AddGroup('Group2', "UI Settings");
+	Group2 = Page.AddGroup('Group2', "UI Settings");
     
-	noColor_Checkbox = Group.AddCheckbox('noColor', 
+	noColor_Checkbox = Group2.AddCheckbox('noColor', 
 		"NoColor", 
 		"Disable coloring of all numbers.",
 		noColor,
 		noColorSaveHandler);
 
-	textAlignment_Dropdown = Group.AddDropdown('textAlignment', 
+	textAlignment_Dropdown = Group2.AddDropdown('textAlignment', 
 		"TextAlignment", 
 		"How the text is aligned witin the 'box'.",
 		textAlignmentOptions,
 		textAlignment,
 		textAlignmentSaveHandler);
 
-	BoxAnchor_Slider = Group.AddSlider('BoxAnchor', 
+	BoxAnchor_Slider = Group2.AddSlider('BoxAnchor', 
 		"BoxAnchor", 
 		"Where the 'box' (which holds the text) is anchored on the screen (the whole screen).\nPossible values (straight from the UIUtilities class):\n0 (ANCHOR_NONE)\n1 (ANCHOR_TOP_LEFT)\n2 (ANCHOR_TOP_CENTER)\n3 (ANCHOR_TOP_RIGHT)\n4 (ANCHOR_MIDDLE_LEFT)\n5 (ANCHOR_MIDDLE_CENTER)\n6 (ANCHOR_MIDDLE_RIGHT)\n7 (ANCHOR_BOTTOM_LEFT)\n8 (ANCHOR_BOTTOM_CENTER)\n9 (ANCHOR_BOTTOM_RIGHT)",
 		0,	// Min
@@ -122,7 +122,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 		BoxAnchor,
 		BoxAnchorSaveHandler);
 
-	OffsetX_Slider = Group.AddSlider('OffsetX', 
+	OffsetX_Slider = Group2.AddSlider('OffsetX', 
 		"OffsetX", 
 		"By how much the 'box' should be offset from its anchor on the X axis",
 		-1000,
@@ -131,7 +131,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 		OffsetX,
 		OffsetXSaveHandler);
 
-	OffsetY_Slider = Group.AddSlider('OffsetY', 
+	OffsetY_Slider = Group2.AddSlider('OffsetY', 
 		"OffsetY", 
 		"By how much the 'box' should be offset from its anchor on the Y axis",
 		-1000,
@@ -139,49 +139,8 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 		1,
 		OffsetY,
 		OffsetYSaveHandler);
-    
-	if (GameMode == eGameMode_MainMenu || GameMode == eGameMode_Strategy)
-    {
-		Page.EnableResetButton(ResetButtonClicked);
-	} 
-	else
-	{
-		SetEditable(Page, false);
-	}
 	
     Page.ShowSettings();
-}
-
-`MCM_CH_VersionChecker(class'KillCounter_Settings_Defaults'.default.CONFIG_VERSION,CONFIG_VERSION)
-
-simulated function SetEditable(MCM_API_SettingsPage Page, bool isEditable)
-{
-	local MCM_API_SettingsGroup Group;
-	local int groupCount, settingsCount;
-
-	for (groupCount = 0; groupCount < Page.GetGroupCount(); groupCount++)
-	{
-		Group = Page.GetGroupByIndex(groupCount);
-		for (settingsCount = 0; settingsCount < Group.GetNumberOfSettings(); settingsCount++)
-		{			
-			Group.GetSettingByIndex(settingsCount).SetEditable(isEditable);
-		}
-	}
-}
-
-simulated function LoadSavedSettings()
-{
-    neverShowEnemyTotal = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.neverShowEnemyTotal, neverShowEnemyTotal);
-	alwaysShowEnemyTotal = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowEnemyTotal, alwaysShowEnemyTotal);
-	alwaysShowActiveEnemyCount = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount, alwaysShowActiveEnemyCount);
-	showRemainingInsteadOfTotal = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal, showRemainingInsteadOfTotal);
-	includeTurrets = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.includeTurrets, includeTurrets);
-
-	noColor = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.noColor, noColor);
-	textAlignment = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.textAlignment, textAlignment);
-	BoxAnchor = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.BoxAnchor, BoxAnchor);
-	OffsetX = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetX, OffsetX);
-	OffsetY = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetY, OffsetY);
 }
 
 `MCM_API_BasicCheckboxSaveHandler(neverShowEnemyTotalSaveHandler, neverShowEnemyTotal)
@@ -196,27 +155,50 @@ simulated function LoadSavedSettings()
 `MCM_API_BasicSliderSaveHandler(OffsetXSaveHandler, OffsetX)
 `MCM_API_BasicSliderSaveHandler(OffsetYSaveHandler, OffsetY)
 
+simulated function LoadSavedSettings(optional bool forceDefault = false)
+{
+    neverShowEnemyTotal = forceDefault ? class'KillCounter_Settings_Defaults'.default.neverShowEnemyTotal : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.neverShowEnemyTotal, neverShowEnemyTotal);
+	alwaysShowEnemyTotal = forceDefault ? class'KillCounter_Settings_Defaults'.default.alwaysShowEnemyTotal : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowEnemyTotal, alwaysShowEnemyTotal);
+	alwaysShowActiveEnemyCount = forceDefault ? class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount, alwaysShowActiveEnemyCount);
+	showRemainingInsteadOfTotal = forceDefault ? class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal, showRemainingInsteadOfTotal);
+	includeTurrets = forceDefault ? class'KillCounter_Settings_Defaults'.default.includeTurrets : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.includeTurrets, includeTurrets);
+
+	noColor = forceDefault ? class'KillCounter_Settings_Defaults'.default.noColor : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.noColor, noColor);
+	textAlignment = forceDefault ? class'KillCounter_Settings_Defaults'.default.textAlignment : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.textAlignment, textAlignment);
+	BoxAnchor = forceDefault ? class'KillCounter_Settings_Defaults'.default.BoxAnchor : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.BoxAnchor, BoxAnchor);
+	OffsetX = forceDefault ? class'KillCounter_Settings_Defaults'.default.OffsetX : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetX, OffsetX);
+	OffsetY = forceDefault ? class'KillCounter_Settings_Defaults'.default.OffsetY : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetY, OffsetY);
+}
+
 simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 {
+	local KillCounter_UI ui;
+
 	self.CONFIG_VERSION = `MCM_CH_GetCompositeVersion();
     self.SaveConfig();
+
+	ui = class'KillCounter_Utils'.static.GetUI();
+	if(ui == none)
+	{
+		return;
+	}
+
+	ui.Update(self);
 }
 
 simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 {
-	defaultSettings = new class'KillCounter_Settings_Defaults';
+	neverShowEnemyTotal_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.neverShowEnemyTotal, true);
+	alwaysShowEnemyTotal_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowEnemyTotal, true);
+	alwaysShowActiveEnemyCount_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount, true);
+	showRemainingInsteadOfTotal_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal, true);
+	includeTurrets_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.includeTurrets, true);
 
-	neverShowEnemyTotal_Checkbox.SetValue(defaultSettings.neverShowEnemyTotal, true);
-	alwaysShowEnemyTotal_Checkbox.SetValue(defaultSettings.alwaysShowEnemyTotal, true);
-	alwaysShowActiveEnemyCount_Checkbox.SetValue(defaultSettings.alwaysShowActiveEnemyCount, true);
-	showRemainingInsteadOfTotal_Checkbox.SetValue(defaultSettings.showRemainingInsteadOfTotal, true);
-	includeTurrets_Checkbox.SetValue(defaultSettings.includeTurrets, true);
-
-	noColor_Checkbox.SetValue(defaultSettings.noColor, true);
-	textAlignment_Dropdown.SetValue(defaultSettings.textAlignment, true);
-	BoxAnchor_Slider.SetValue(defaultSettings.BoxAnchor, true);
-	OffsetX_Slider.SetValue(defaultSettings.OffsetX, true);
-	OffsetY_Slider.SetValue(defaultSettings.OffsetY, true);
+	noColor_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.noColor, true);
+	textAlignment_Dropdown.SetValue(class'KillCounter_Settings_Defaults'.default.textAlignment, true);
+	BoxAnchor_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.BoxAnchor, true);
+	OffsetX_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.OffsetX, true);
+	OffsetY_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.OffsetY, true);
 }
 
 defaultproperties

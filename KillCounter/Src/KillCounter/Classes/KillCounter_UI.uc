@@ -10,6 +10,11 @@ var KillCounter_Settings settings;
 var UIText Text;
 var UITextStyleObject TextStyle;
 
+var int LastKilled;
+var int LastTotal;
+var int LastActive;
+var int LastIndex;
+
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
 {
 	settings = new class'KillCounter_Settings';
@@ -32,14 +37,43 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	return self;
 }
 
-function UpdateText(int killed, int total, int active, bool showRemaining)
+function Update(KillCounter_Settings newSettings)
+{
+	settings = newSettings;
+
+	self.SetAnchor(settings.BoxAnchor);
+	self.SetPosition(settings.OffsetX, settings.OffsetY); 
+
+	UpdateText();
+}
+
+function UpdateText(optional int killed = LastKilled, optional int total = LastTotal, optional int active = LastActive, optional int historyIndex = LastIndex)
 {
 	local string Value;
+	local bool ShowTotal, ShowActive, SkipTurrets;
 
 	if(Text == none)
 	{
 		return;
 	}
+
+	if(total == LastTotal || active == LastActive || killed == LastKilled || TextStyle.Alignment != settings.textAlignment)
+	{
+		ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
+		ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
+		SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
+
+		killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
+		active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
+		total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
+
+		TextStyle.Alignment = settings.textAlignment;
+	}
+
+	LastKilled = killed;
+	LastTotal = total;
+	LastActive = active;
+	LastIndex = historyIndex;
 
 	Value = strKilled @ AddColor(killed, eUIState_Good);
 
@@ -50,7 +84,7 @@ function UpdateText(int killed, int total, int active, bool showRemaining)
 
 	if(total != -1)
 	{
-		if(showRemaining)
+		if(settings.showRemainingInsteadOfTotal)
 		{
 			Value @= strRemaining @ AddColor(total - killed, eUIState_Bad);
 		}
@@ -71,4 +105,12 @@ function string AddColor(int value, int clr)
 	}
 
 	return class'UIUtilities_Text'.static.GetColoredText(string(value), clr);
+}
+
+defaultproperties
+{
+	LastKilled = -1;
+	LastTotal = -1;
+	LastActive = -1;
+	LastIndex = -1;
 }
