@@ -57,6 +57,9 @@
     <Content Include="Src\KillCounter\Classes\KillCounter_Settings_Defaults.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\KillCounter\Classes\KillCounter_Settings_Listener.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\KillCounter\Classes\KillCounter_UI.uc">
       <SubType>Content</SubType>
     </Content>

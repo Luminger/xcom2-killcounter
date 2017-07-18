@@ -1,4 +1,4 @@
-class KillCounter_Settings extends UIScreenListener config(KillCounter);
+class KillCounter_Settings extends Object config(KillCounter);
 
 `include(KillCounter/Src/ModConfigMenuAPI/MCM_API_Includes.uci)
 `include(KillCounter/Src/ModConfigMenuAPI/MCM_API_CfgHelpers.uci)
@@ -31,7 +31,7 @@ var MCM_API_Slider OffsetY_Slider;
 
 `MCM_CH_VersionChecker(class'KillCounter_Settings_Defaults'.default.CONFIG_VERSION,CONFIG_VERSION)
 
-event OnInit(UIScreen Screen)
+function OnInit(UIScreen Screen)
 {
 	if (MCM_API(Screen) != none)
 	{
@@ -199,9 +199,4 @@ simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 	BoxAnchor_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.BoxAnchor, true);
 	OffsetX_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.OffsetX, true);
 	OffsetY_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.OffsetY, true);
-}
-
-defaultproperties
-{
-    ScreenClass = none;
 }
