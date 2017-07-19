@@ -20,10 +20,10 @@ event OnInit(UIScreen Screen)
 	// Reset is needed here for a load from Tactical to Tactical as the
 	// current instance doesn't get destroyed - but OnInit is called
 	// again, so here's the correct place to wipe all of the state again.
-	LastKilled = -1;
-	LastActive = -1;
-	LastTotal = -1;
-	LastRealizedIndex = -1;
+	LastKilled = default.LastKilled;
+	LastActive = default.LastActive;
+	LastTotal = default.LastTotal;
+	LastRealizedIndex = default.LastRealizedIndex;
 	AlreadySeenIndexes.Length = 0;
 
 	RegisterEvents();
@@ -256,7 +256,7 @@ function UpdateUI(int historyIndex)
 
 	if (killed != LastKilled || active != LastActive || total != LastTotal)
 	{
-		ui.UpdateText(killed, total, active, historyIndex);
+		ui.UpdateText(killed, active, total, historyIndex);
 		
 		LastKilled = killed;
 		LastActive = active;

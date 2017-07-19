@@ -10,9 +10,6 @@ var KillCounter_Settings settings;
 var UIText Text;
 var UITextStyleObject TextStyle;
 
-var int LastKilled;
-var int LastTotal;
-var int LastActive;
 var int LastIndex;
 
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
@@ -39,40 +36,36 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 
 function Update(KillCounter_Settings newSettings)
 {
+	local bool ShowTotal, ShowActive, SkipTurrets;
+	local int killed, active, total;
+
 	settings = newSettings;
 
 	self.SetAnchor(settings.BoxAnchor);
 	self.SetPosition(settings.OffsetX, settings.OffsetY); 
 
-	UpdateText();
+	ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
+	ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
+	SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
+
+	killed = class'KillCounter_Utils'.static.GetKilledEnemies(LastIndex, SkipTurrets);
+	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(LastIndex, SkipTurrets) : -1;
+	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
+
+	TextStyle.Alignment = settings.textAlignment;
+
+	UpdateText(killed, active, total);
 }
 
-function UpdateText(optional int killed = LastKilled, optional int total = LastTotal, optional int active = LastActive, optional int historyIndex = LastIndex)
+function UpdateText(int killed, int active, int total, optional int historyIndex = LastIndex)
 {
 	local string Value;
-	local bool ShowTotal, ShowActive, SkipTurrets;
 
 	if(Text == none)
 	{
 		return;
 	}
 
-	if(total == LastTotal || active == LastActive || killed == LastKilled || TextStyle.Alignment != settings.textAlignment)
-	{
-		ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
-		ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
-		SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
-
-		killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
-		active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
-		total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
-
-		TextStyle.Alignment = settings.textAlignment;
-	}
-
-	LastKilled = killed;
-	LastTotal = total;
-	LastActive = active;
 	LastIndex = historyIndex;
 
 	Value = strKilled @ AddColor(killed, eUIState_Good);
@@ -109,8 +102,5 @@ function string AddColor(int value, int clr)
 
 defaultproperties
 {
-	LastKilled = -1;
-	LastTotal = -1;
-	LastActive = -1;
 	LastIndex = -1;
 }
