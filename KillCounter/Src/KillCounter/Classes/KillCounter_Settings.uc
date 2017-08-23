@@ -33,11 +33,10 @@ var MCM_API_Slider OffsetY_Slider;
 
 function OnInit(UIScreen Screen)
 {
-	if (MCM_API(Screen) != none)
-	{
-		`MCM_API_Register(Screen, ClientModCallback);
-	} 
-	else if(CONFIG_VERSION == 0) 
+	`MCM_API_Register(Screen, ClientModCallback);
+
+	// Ensure that the default config is loaded if necessary, in the UIShell
+	if (CONFIG_VERSION == 0) 
 	{
 		LoadSavedSettings();
 		SaveButtonClicked(none);
@@ -155,19 +154,19 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 `MCM_API_BasicSliderSaveHandler(OffsetXSaveHandler, OffsetX)
 `MCM_API_BasicSliderSaveHandler(OffsetYSaveHandler, OffsetY)
 
-simulated function LoadSavedSettings(optional bool forceDefault = false)
+simulated function LoadSavedSettings()
 {
-    neverShowEnemyTotal = forceDefault ? class'KillCounter_Settings_Defaults'.default.neverShowEnemyTotal : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.neverShowEnemyTotal, neverShowEnemyTotal);
-	alwaysShowEnemyTotal = forceDefault ? class'KillCounter_Settings_Defaults'.default.alwaysShowEnemyTotal : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowEnemyTotal, alwaysShowEnemyTotal);
-	alwaysShowActiveEnemyCount = forceDefault ? class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount, alwaysShowActiveEnemyCount);
-	showRemainingInsteadOfTotal = forceDefault ? class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal, showRemainingInsteadOfTotal);
-	includeTurrets = forceDefault ? class'KillCounter_Settings_Defaults'.default.includeTurrets : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.includeTurrets, includeTurrets);
+    neverShowEnemyTotal = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.neverShowEnemyTotal, neverShowEnemyTotal);
+	alwaysShowEnemyTotal = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowEnemyTotal, alwaysShowEnemyTotal);
+	alwaysShowActiveEnemyCount = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount, alwaysShowActiveEnemyCount);
+	showRemainingInsteadOfTotal = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal, showRemainingInsteadOfTotal);
+	includeTurrets = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.includeTurrets, includeTurrets);
 
-	noColor = forceDefault ? class'KillCounter_Settings_Defaults'.default.noColor : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.noColor, noColor);
-	textAlignment = forceDefault ? class'KillCounter_Settings_Defaults'.default.textAlignment : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.textAlignment, textAlignment);
-	BoxAnchor = forceDefault ? class'KillCounter_Settings_Defaults'.default.BoxAnchor : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.BoxAnchor, BoxAnchor);
-	OffsetX = forceDefault ? class'KillCounter_Settings_Defaults'.default.OffsetX : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetX, OffsetX);
-	OffsetY = forceDefault ? class'KillCounter_Settings_Defaults'.default.OffsetY : `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetY, OffsetY);
+	noColor = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.noColor, noColor);
+	textAlignment = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.textAlignment, textAlignment);
+	BoxAnchor = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.BoxAnchor, BoxAnchor);
+	OffsetX = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetX, OffsetX);
+	OffsetY = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.OffsetY, OffsetY);
 }
 
 simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
@@ -183,7 +182,7 @@ simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 		return;
 	}
 
-	ui.Update(self);
+	ui.UpdateSettings(self);
 }
 
 simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
@@ -199,4 +198,28 @@ simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 	BoxAnchor_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.BoxAnchor, true);
 	OffsetX_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.OffsetX, true);
 	OffsetY_Slider.SetValue(class'KillCounter_Settings_Defaults'.default.OffsetY, true);
+}
+
+function bool ShouldDrawTotalCount()
+{
+	if(self.alwaysShowEnemyTotal)
+	{
+		return true;
+	}
+	else if(self.neverShowEnemyTotal) 
+	{
+		return false;
+	} 
+
+	return class'KillCounter_Utils'.static.IsShadowChamberBuild();
+}
+
+function bool ShouldDrawActiveCount()
+{
+	return self.alwaysShowActiveEnemyCount;
+}
+
+function bool ShouldSkipTurrets()
+{
+	return !self.includeTurrets;
 }

@@ -1,28 +1,10 @@
 class KillCounter extends UIScreenListener implements(X2VisualizationMgrObserverInterface);
 
-var bool ShowTotal;
-var bool ShowActive;
-var bool SkipTurrets;
-
-var int LastKilled;
-var int LastActive;
-var int LastTotal;
-
 var int LastRealizedIndex;
 var array<int> AlreadySeenIndexes;
 
 event OnInit(UIScreen Screen)
 {	
-	ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
-	ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
-	SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
-
-	// Reset is needed here for a load from Tactical to Tactical as the
-	// current instance doesn't get destroyed - but OnInit is called
-	// again, so here's the correct place to wipe all of the state again.
-	LastKilled = default.LastKilled;
-	LastActive = default.LastActive;
-	LastTotal = default.LastTotal;
 	LastRealizedIndex = default.LastRealizedIndex;
 	AlreadySeenIndexes.Length = 0;
 
@@ -82,15 +64,15 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	local int startPos, endPos;
 	local int startIndex;
 	local int interrupted;
-	local string logStr;
+	//local string logStr;
 
-	`log("Index: " @ string(index) @ "LastRealizedIndex: " @ string(LastRealizedIndex));
+	//`log("Index: " @ string(index) @ "LastRealizedIndex: " @ string(LastRealizedIndex));
 	// Short circuit: If it's the next frame we would expect, just roll with
 	// it. Same if this is the first index we do see in this play session.
 	if(index == LastRealizedIndex + 1 || LastRealizedIndex == -1)
 	{
 		LastRealizedIndex = index;
-		`log("Ret: True (1)");
+		//`log("Ret: True (1)");
 		return true;
 	}
 
@@ -114,7 +96,7 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	if(startIndex == index)
 	{
 		LastRealizedIndex = index;
-		`log("Reg: True (2)");
+		//`log("Reg: True (2)");
 		return true;
 	}
 
@@ -128,11 +110,11 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// If any of them couldn't be found, we can immediatly return here.
 	startPos = AlreadySeenIndexes.Find(startIndex);
 	endPos = AlreadySeenIndexes.Find(index);
-	`log("startIndex: " @ startIndex);
-	`log("startPos: " @ startPos @ " endPos: " @ endPos);
+	//`log("startIndex: " @ startIndex);
+	//`log("startPos: " @ startPos @ " endPos: " @ endPos);
 	if (startPos == INDEX_NONE || endPos == INDEX_NONE)
 	{
-		`log("Ret: False (3)");
+		//`log("Ret: False (3)");
 		return false;
 	}
 
@@ -141,14 +123,14 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// and index were interrupted (and therefore will never show up in our
 	// list).
 	interrupted = findInterruptCountBetween(startIndex, index);
-	`log("Interrupted between " @ string(startIndex) @ " and " @ string(index) @ ":" @ string(interrupted));
+	//`log("Interrupted between " @ string(startIndex) @ " and " @ string(index) @ ":" @ string(interrupted));
 
 	// Now to the actual checking: All we check here is if the sum of the
 	// indexes we have gathered in our array PLUS all the interrupted frames
 	// do match up with the number of frames between the first non interrupted
 	// frame after our LastRealizedFrame (this is the startIndex) and the 
 	// given index. Simple, isn't it? *cough*
-	`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
+	//`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
 
 	// Normally I wouldn't want to have a >= here but a ==. But it turned out
 	// that there is a case where an unexpected frame turned up in the list
@@ -163,17 +145,17 @@ function bool ShouldGivenGameStateBeUsed(int index)
 		// array and move on.
 		AlreadySeenIndexes.Remove(startPos, endPos - startPos + 1);
 		LastRealizedIndex = index;
-		`log("Ret: True (4)");
+		//`log("Ret: True (4)");
 		return true;
 	}
 
-	logStr = "Indexes:";
-	ForEach AlreadySeenIndexes(startIndex)
-	{
-		logStr @= startIndex;
-	}
-	`log(logStr);
-	`log("Ret: False (5)");
+	//logStr = "Indexes:";
+	//ForEach AlreadySeenIndexes(startIndex)
+	//{
+	//	logStr @= startIndex;
+	//}
+	//`log(logStr);
+	//`log("Ret: False (5)");
 	return false;
 }
 
@@ -237,41 +219,18 @@ function DestroyUI()
 
 function UpdateUI(int historyIndex)
 {
-	local int killed, total, active;
 	local KillCounter_UI ui;
-
 	ui = class'KillCounter_Utils'.static.GetUI(); 
 	if(ui == none)
 	{
 		return;
 	}
 
-	ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
-	ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
-	SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
-
-	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
-	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
-	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
-
-	if (killed != LastKilled || active != LastActive || total != LastTotal)
-	{
-		ui.UpdateText(killed, active, total, historyIndex);
-		
-		LastKilled = killed;
-		LastActive = active;
-		LastTotal = total;
-	}
+	ui.Update(historyIndex);
 }
 
 defaultproperties
 {
 	ScreenClass = class'UITacticalHUD';
-	ShowTotal = false;
-	ShowActive = true;
-	SkipTurrets = true;
-	LastKilled = -1;
-	LastActive = -1;
-	LastTotal = -1;
 	LastRealizedIndex = -1;
 }

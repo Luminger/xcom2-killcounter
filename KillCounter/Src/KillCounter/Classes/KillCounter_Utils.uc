@@ -249,7 +249,6 @@ static function KillCounter_UI GetUI()
 	}
 
 	ui = KillCounter_UI(hud.GetChild('KillCounter_UI'));
-
 	if(ui == none)
 	{
 		ui = hud.Spawn(class'KillCounter_UI', hud);
@@ -257,40 +256,4 @@ static function KillCounter_UI GetUI()
 	}
 
 	return ui;
-}
-
-static function bool ShouldDrawTotalCount()
-{
-	local KillCounter_Settings settings;
-
-	settings = new class'KillCounter_Settings';
-
-	if(settings.alwaysShowEnemyTotal)
-	{
-		return true;
-	}
-	else if(settings.neverShowEnemyTotal) 
-	{
-		return false;
-	} 
-
-	return class'KillCounter_Utils'.static.IsShadowChamberBuild();
-}
-
-static function bool ShouldDrawActiveCount()
-{
-	local KillCounter_Settings settings;
-
-	settings = new class'KillCounter_Settings';
-
-	return settings.alwaysShowActiveEnemyCount;
-}
-
-static function bool ShouldSkipTurrets()
-{
-	local KillCounter_Settings settings;
-
-	settings = new class'KillCounter_Settings';
-
-	return !settings.includeTurrets;
 }

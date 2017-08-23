@@ -5,21 +5,20 @@ var localized string strActive;
 var localized string strTotal;
 var localized string strRemaining;
 
-var KillCounter_Settings settings;
+var KillCounter_Settings Settings;
 
 var UIText Text;
 var UITextStyleObject TextStyle;
 
+var int LastKilled;
+var int LastActive;
+var int LastTotal;
 var int LastIndex;
 
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
 {
-	settings = new class'KillCounter_Settings';
-
 	super.InitPanel(InitName, InitLibID);
-	self.SetAnchor(settings.BoxAnchor);
 	self.SetSize(350, 50);
-	self.SetPosition(settings.OffsetX, settings.OffsetY); 
 
 	Text = Spawn(class'UIText', self);
 	Text.InitText('KillCounter_Text');
@@ -28,31 +27,50 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	class'KillCounter_Utils'.static.ShadowToTextField(Text);
 
 	TextStyle = class'UIUtilities_Text'.static.GetStyle(eUITextStyle_Tooltip_H2);
-	TextStyle.Alignment = settings.textAlignment;
 	TextStyle.bUseCaps = False;
+
+	UpdateSettings(new class'KillCounter_Settings');
+
+	// Reset is needed here for a load from Tactical to Tactical as the
+	// current instance doesn't get destroyed - but OnInit is called
+	// again, so here's the correct place to wipe all of the state again.
+	LastKilled = default.LastKilled;
+	LastActive = default.LastActive;
+	LastTotal = default.LastTotal;
 
 	return self;
 }
 
-function Update(KillCounter_Settings newSettings)
+function UpdateSettings(KillCounter_Settings newSettings)
+{
+	Settings = newSettings;
+
+	self.SetAnchor(settings.BoxAnchor);
+	self.SetPosition(settings.OffsetX, settings.OffsetY);
+	TextStyle.Alignment = Settings.textAlignment;
+}
+
+function Update(optional int historyIndex = LastIndex)
 {
 	local bool ShowTotal, ShowActive, SkipTurrets;
 	local int killed, active, total;
 
-	settings = newSettings;
+	ShowTotal = Settings.ShouldDrawTotalCount();
+	ShowActive = Settings.ShouldDrawActiveCount();
+	SkipTurrets = Settings.ShouldSkipTurrets();
 
-	self.SetAnchor(settings.BoxAnchor);
-	self.SetPosition(settings.OffsetX, settings.OffsetY); 
-
-	ShowTotal = class'KillCounter_Utils'.static.ShouldDrawTotalCount();
-	ShowActive = class'KillCounter_Utils'.static.ShouldDrawActiveCount();
-	SkipTurrets = class'KillCounter_Utils'.static.ShouldSkipTurrets();
-
-	killed = class'KillCounter_Utils'.static.GetKilledEnemies(LastIndex, SkipTurrets);
-	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(LastIndex, SkipTurrets) : -1;
+	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
+	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
 	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
 
-	TextStyle.Alignment = settings.textAlignment;
+	if (killed != LastKilled || active != LastActive || total != LastTotal)
+	{
+		self.UpdateText(killed, active, total, historyIndex);
+		
+		LastKilled = killed;
+		LastActive = active;
+		LastTotal = total;
+	}
 
 	UpdateText(killed, active, total);
 }
@@ -102,5 +120,8 @@ function string AddColor(int value, int clr)
 
 defaultproperties
 {
+	LastKilled = -1;
+	LastActive = -1;
+	LastTotal = -1;
 	LastIndex = -1;
 }
