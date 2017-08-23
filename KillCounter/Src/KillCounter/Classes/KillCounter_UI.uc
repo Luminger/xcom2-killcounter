@@ -29,14 +29,14 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	TextStyle = class'UIUtilities_Text'.static.GetStyle(eUITextStyle_Tooltip_H2);
 	TextStyle.bUseCaps = False;
 
-	UpdateSettings(new class'KillCounter_Settings');
-
 	// Reset is needed here for a load from Tactical to Tactical as the
 	// current instance doesn't get destroyed - but OnInit is called
 	// again, so here's the correct place to wipe all of the state again.
 	LastKilled = default.LastKilled;
 	LastActive = default.LastActive;
 	LastTotal = default.LastTotal;
+
+	UpdateSettings(new class'KillCounter_Settings');
 
 	return self;
 }
@@ -48,6 +48,8 @@ function UpdateSettings(KillCounter_Settings newSettings)
 	self.SetAnchor(settings.BoxAnchor);
 	self.SetPosition(settings.OffsetX, settings.OffsetY);
 	TextStyle.Alignment = Settings.textAlignment;
+
+	self.Update();
 }
 
 function Update(optional int historyIndex = LastIndex)
