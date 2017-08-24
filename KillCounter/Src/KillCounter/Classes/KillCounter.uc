@@ -9,6 +9,10 @@ event OnInit(UIScreen Screen)
 	AlreadySeenIndexes.Length = 0;
 
 	RegisterEvents();
+
+	// A call to GetUI will initialize the UI if it isn't already. This
+	// fixes a bug where the UI isn't shown after a savegame load in tactical.
+	class'KillCounter_Utils'.static.GetUI();
 }
 
 event OnRemoved(UIScreen Screen)
