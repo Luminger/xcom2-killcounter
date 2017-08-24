@@ -5,7 +5,11 @@ var array<int> AlreadySeenIndexes;
 
 event OnInit(UIScreen Screen)
 {	
-	LastRealizedIndex = default.LastRealizedIndex;
+	// For some unknown reason LastRealizedIndex can't be just set to
+	// `defaults.LastRealizedIndex`; I assume the default value got somehow
+	// overwritten during the reinit of screens. Having -1 hardcoded solves
+	// any "the UI doesn't update" issues I have seen so far.
+	LastRealizedIndex = -1;
 	AlreadySeenIndexes.Length = 0;
 
 	RegisterEvents();
