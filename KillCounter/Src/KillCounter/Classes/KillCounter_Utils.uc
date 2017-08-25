@@ -236,3 +236,24 @@ static function bool IsGameStateInterrupted(int index)
 	// this would mean that we do not expect to ever see them.
 	return context.InterruptionStatus == eInterruptionStatus_Interrupt && context.ResumeHistoryIndex != -1;
 }
+
+static function KillCounter_UI GetUI()
+{
+	local UIScreen hud;
+	local KillCounter_UI ui;
+
+	hud = `PRES.GetTacticalHUD();
+	if (hud == none)
+	{
+		return none;
+	}
+
+	ui = KillCounter_UI(hud.GetChild('KillCounter_UI'));
+	if(ui == none)
+	{
+		ui = hud.Spawn(class'KillCounter_UI', hud);
+		ui.InitPanel('KillCounter_UI');
+	}
+
+	return ui;
+}

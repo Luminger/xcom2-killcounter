@@ -1,40 +1,22 @@
-class KillCounter extends UIScreenListener implements(X2VisualizationMgrObserverInterface) config(KillCounter);
-
-var config bool neverShowEnemyTotal;
-var config bool neverShowActiveEnemyCount;
-var config bool alwaysShowEnemyTotal;
-var config bool showRemainingInsteadOfTotal;
-var config bool includeTurrets;
-
-var bool ShowTotal;
-var bool ShowActive;
-var bool ShowRemaining;
-var bool SkipTurrets;
-
-var int LastKilled;
-var int LastActive;
-var int LastTotal;
+class KillCounter extends UIScreenListener implements(X2VisualizationMgrObserverInterface);
 
 var int LastRealizedIndex;
 var array<int> AlreadySeenIndexes;
 
 event OnInit(UIScreen Screen)
-{
-	ShowTotal = ShouldDrawTotalCount();
-	ShowActive = ShouldDrawActiveCount();
-	ShowRemaining = ShouldDrawRemainingCount();
-	SkipTurrets = ShouldSkipTurrets();
-
-	// Reset is needed here for a load from Tactical to Tactical as the
-	// current instance doesn't get destroyed - but OnInit is called
-	// again, so here's the correct place to wipe all of the state again.
-	LastKilled = -1;
-	LastActive = -1;
-	LastTotal = -1;
+{	
+	// For some unknown reason LastRealizedIndex can't be just set to
+	// `defaults.LastRealizedIndex`; I assume the default value got somehow
+	// overwritten during the reinit of screens. Having -1 hardcoded solves
+	// any "the UI doesn't update" issues I have seen so far.
 	LastRealizedIndex = -1;
 	AlreadySeenIndexes.Length = 0;
 
 	RegisterEvents();
+
+	// A call to GetUI will initialize the UI if it isn't already. This
+	// fixes a bug where the UI isn't shown after a savegame load in tactical.
+	class'KillCounter_Utils'.static.GetUI();
 }
 
 event OnRemoved(UIScreen Screen)
@@ -90,15 +72,31 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	local int startPos, endPos;
 	local int startIndex;
 	local int interrupted;
-	local string logStr;
 
-	`log("Index: " @ string(index) @ "LastRealizedIndex: " @ string(LastRealizedIndex));
+	local KillCounter_Settings settings;
+	local bool debug;
+	local string logStr;
+	
+	// The performance penalty hopefully isn't that bad. I assume computing all
+	// the log strings does have a bigger impact than checking for the debug
+	// flag (and creating an instance before).
+	settings = new class'KillCounter_Settings';
+	debug = settings.IsDebugEnabled();
+
+	if(debug)
+	{
+		`log("Index: " @ string(index) @ "LastRealizedIndex: "  @ string(LastRealizedIndex));
+	}
+
 	// Short circuit: If it's the next frame we would expect, just roll with
 	// it. Same if this is the first index we do see in this play session.
 	if(index == LastRealizedIndex + 1 || LastRealizedIndex == -1)
 	{
 		LastRealizedIndex = index;
-		`log("Ret: True (1)");
+		if(debug)
+		{
+			`log("Ret: True (1)");
+		}
 		return true;
 	}
 
@@ -122,7 +120,10 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	if(startIndex == index)
 	{
 		LastRealizedIndex = index;
-		`log("Reg: True (2)");
+		if(debug)
+		{
+			`log("Reg: True (2)");
+		}
 		return true;
 	}
 
@@ -136,11 +137,19 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// If any of them couldn't be found, we can immediatly return here.
 	startPos = AlreadySeenIndexes.Find(startIndex);
 	endPos = AlreadySeenIndexes.Find(index);
-	`log("startIndex: " @ startIndex);
-	`log("startPos: " @ startPos @ " endPos: " @ endPos);
+
+	if(debug)
+	{
+		`log("startIndex: " @ startIndex);
+		`log("startPos: " @ startPos @ " endPos: " @ endPos);
+	}
+
 	if (startPos == INDEX_NONE || endPos == INDEX_NONE)
 	{
-		`log("Ret: False (3)");
+		if(debug)
+		{
+			`log("Ret: False (3)");
+		}
 		return false;
 	}
 
@@ -149,14 +158,20 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// and index were interrupted (and therefore will never show up in our
 	// list).
 	interrupted = findInterruptCountBetween(startIndex, index);
-	`log("Interrupted between " @ string(startIndex) @ " and " @ string(index) @ ":" @ string(interrupted));
+	if(debug)
+	{
+		`log("Interrupted between " @ string(startIndex) @ " and " @ string(index) @ ":" @ string(interrupted));
+	}
 
 	// Now to the actual checking: All we check here is if the sum of the
 	// indexes we have gathered in our array PLUS all the interrupted frames
 	// do match up with the number of frames between the first non interrupted
 	// frame after our LastRealizedFrame (this is the startIndex) and the 
 	// given index. Simple, isn't it? *cough*
-	`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
+	if(debug)
+	{
+		`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
+	}
 
 	// Normally I wouldn't want to have a >= here but a ==. But it turned out
 	// that there is a case where an unexpected frame turned up in the list
@@ -171,17 +186,23 @@ function bool ShouldGivenGameStateBeUsed(int index)
 		// array and move on.
 		AlreadySeenIndexes.Remove(startPos, endPos - startPos + 1);
 		LastRealizedIndex = index;
-		`log("Ret: True (4)");
+		if(debug)
+		{
+			`log("Ret: True (4)");
+		}
 		return true;
 	}
 
-	logStr = "Indexes:";
-	ForEach AlreadySeenIndexes(startIndex)
+	if(debug)
 	{
-		logStr @= startIndex;
+		logStr = "Indexes:";
+		ForEach AlreadySeenIndexes(startIndex)
+		{
+			logStr @= startIndex;
+		}
+		`log(logStr);
+		`log("Ret: False (5)");
 	}
-	`log(logStr);
-	`log("Ret: False (5)");
 	return false;
 }
 
@@ -231,32 +252,10 @@ function UnregisterEvents()
 	`XCOMVISUALIZATIONMGR.RemoveObserver(self);
 }
 
-function KillCounter_UI GetUI()
-{
-	local UIScreen hud;
-	local KillCounter_UI ui;
-
-	hud = `PRES.GetTacticalHUD();
-	if (hud == none)
-	{
-		return none;
-	}
-
-	ui = KillCounter_UI(hud.GetChild('KillCounter_UI'));
-
-	if(ui == none)
-	{
-		ui = hud.Spawn(class'KillCounter_UI', hud);
-		ui.InitPanel('KillCounter_UI');
-	}
-
-	return ui;
-}
-
 function DestroyUI()
 {
 	local KillCounter_UI ui;
-	ui = GetUI();
+	ui = class'KillCounter_Utils'.static.GetUI();
 	if(ui == none)
 	{
 		return;
@@ -267,67 +266,18 @@ function DestroyUI()
 
 function UpdateUI(int historyIndex)
 {
-	local int killed, total, active;
 	local KillCounter_UI ui;
-	
-	ui = GetUI(); 
+	ui = class'KillCounter_Utils'.static.GetUI(); 
 	if(ui == none)
 	{
 		return;
 	}
 
-	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
-	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
-	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
-
-	if (killed != LastKilled || active != LastActive || total != LastTotal)
-	{
-		ui.UpdateText(killed, total, active, ShowRemaining);
-		
-		LastKilled = killed;
-		LastActive = active;
-		LastTotal = total;
-	}
-}
-
-function bool ShouldDrawTotalCount()
-{
-	if(alwaysShowEnemyTotal)
-	{
-		return true;
-	}
-	else if(neverShowEnemyTotal) 
-	{
-		return false;
-	} 
-
-	return class'KillCounter_Utils'.static.IsShadowChamberBuild();
-}
-
-function bool ShouldDrawActiveCount()
-{
-	return !neverShowActiveEnemyCount;
-}
-
-function bool ShouldDrawRemainingCount()
-{
-	return showRemainingInsteadOfTotal;
-}
-
-function bool ShouldSkipTurrets()
-{
-	return !includeTurrets;
+	ui.Update(historyIndex);
 }
 
 defaultproperties
 {
 	ScreenClass = class'UITacticalHUD';
-	ShowTotal = false;
-	ShowActive = true;
-	ShowRemaining = true;
-	SkipTurrets = true;
-	LastKilled = -1;
-	LastActive = -1;
-	LastTotal = -1;
 	LastRealizedIndex = -1;
 }
