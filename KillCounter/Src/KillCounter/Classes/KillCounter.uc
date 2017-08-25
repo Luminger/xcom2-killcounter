@@ -72,15 +72,31 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	local int startPos, endPos;
 	local int startIndex;
 	local int interrupted;
-	//local string logStr;
 
-	//`log("Index: " @ string(index) @ "LastRealizedIndex: " @ string(LastRealizedIndex));
+	local KillCounter_Settings settings;
+	local bool debug;
+	local string logStr;
+	
+	// The performance penalty hopefully isn't that bad. I assume computing all
+	// the log strings does have a bigger impact than checking for the debug
+	// flag (and creating an instance before).
+	settings = new class'KillCounter_Settings';
+	debug = settings.IsDebugEnabled();
+
+	if(debug)
+	{
+		`log("Index: " @ string(index) @ "LastRealizedIndex: "  @ string(LastRealizedIndex));
+	}
+
 	// Short circuit: If it's the next frame we would expect, just roll with
 	// it. Same if this is the first index we do see in this play session.
 	if(index == LastRealizedIndex + 1 || LastRealizedIndex == -1)
 	{
 		LastRealizedIndex = index;
-		//`log("Ret: True (1)");
+		if(debug)
+		{
+			`log("Ret: True (1)");
+		}
 		return true;
 	}
 
@@ -104,7 +120,10 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	if(startIndex == index)
 	{
 		LastRealizedIndex = index;
-		//`log("Reg: True (2)");
+		if(debug)
+		{
+			`log("Reg: True (2)");
+		}
 		return true;
 	}
 
@@ -118,11 +137,19 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// If any of them couldn't be found, we can immediatly return here.
 	startPos = AlreadySeenIndexes.Find(startIndex);
 	endPos = AlreadySeenIndexes.Find(index);
-	//`log("startIndex: " @ startIndex);
-	//`log("startPos: " @ startPos @ " endPos: " @ endPos);
+
+	if(debug)
+	{
+		`log("startIndex: " @ startIndex);
+		`log("startPos: " @ startPos @ " endPos: " @ endPos);
+	}
+
 	if (startPos == INDEX_NONE || endPos == INDEX_NONE)
 	{
-		//`log("Ret: False (3)");
+		if(debug)
+		{
+			`log("Ret: False (3)");
+		}
 		return false;
 	}
 
@@ -131,14 +158,20 @@ function bool ShouldGivenGameStateBeUsed(int index)
 	// and index were interrupted (and therefore will never show up in our
 	// list).
 	interrupted = findInterruptCountBetween(startIndex, index);
-	//`log("Interrupted between " @ string(startIndex) @ " and " @ string(index) @ ":" @ string(interrupted));
+	if(debug)
+	{
+		`log("Interrupted between " @ string(startIndex) @ " and " @ string(index) @ ":" @ string(interrupted));
+	}
 
 	// Now to the actual checking: All we check here is if the sum of the
 	// indexes we have gathered in our array PLUS all the interrupted frames
 	// do match up with the number of frames between the first non interrupted
 	// frame after our LastRealizedFrame (this is the startIndex) and the 
 	// given index. Simple, isn't it? *cough*
-	//`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
+	if(debug)
+	{
+		`log("A: " @ string((endPos - startPos + interrupted)) @ " B: " @ string((index - startIndex)));
+	}
 
 	// Normally I wouldn't want to have a >= here but a ==. But it turned out
 	// that there is a case where an unexpected frame turned up in the list
@@ -153,17 +186,23 @@ function bool ShouldGivenGameStateBeUsed(int index)
 		// array and move on.
 		AlreadySeenIndexes.Remove(startPos, endPos - startPos + 1);
 		LastRealizedIndex = index;
-		//`log("Ret: True (4)");
+		if(debug)
+		{
+			`log("Ret: True (4)");
+		}
 		return true;
 	}
 
-	//logStr = "Indexes:";
-	//ForEach AlreadySeenIndexes(startIndex)
-	//{
-	//	logStr @= startIndex;
-	//}
-	//`log(logStr);
-	//`log("Ret: False (5)");
+	if(debug)
+	{
+		logStr = "Indexes:";
+		ForEach AlreadySeenIndexes(startIndex)
+		{
+			logStr @= startIndex;
+		}
+		`log(logStr);
+		`log("Ret: False (5)");
+	}
 	return false;
 }
 

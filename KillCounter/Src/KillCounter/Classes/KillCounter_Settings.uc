@@ -8,6 +8,7 @@ var config bool alwaysShowEnemyTotal;
 var config bool alwaysShowActiveEnemyCount;
 var config bool showRemainingInsteadOfTotal;
 var config bool includeTurrets;
+var config bool debug;
 
 var config bool noColor;
 var config string textAlignment;
@@ -22,6 +23,7 @@ var MCM_API_Checkbox alwaysShowEnemyTotal_Checkbox;
 var MCM_API_Checkbox alwaysShowActiveEnemyCount_Checkbox;
 var MCM_API_Checkbox showRemainingInsteadOfTotal_Checkbox;
 var MCM_API_Checkbox includeTurrets_Checkbox;
+var MCM_API_Checkbox debug_Checkbox;
 
 var MCM_API_Checkbox noColor_Checkbox;
 var MCM_API_Dropdown textAlignment_Dropdown;
@@ -95,6 +97,12 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 		includeTurrets,
 		includeTurretsSaveHandler);
 
+	debug_checkbox = Group1.AddCheckbox('debug',
+		"Debug",
+		"In case things don't work as expected, this switch enables logging of (possibly) valueable information.",
+		debug,
+		debugSaveHandler); 
+
 		// ---------------------------- UI Settings ----------------------------- //
 
 	Group2 = Page.AddGroup('Group2', "UI Settings");
@@ -147,6 +155,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 `MCM_API_BasicCheckboxSaveHandler(alwaysShowActiveEnemyCountSaveHandler, alwaysShowActiveEnemyCount)
 `MCM_API_BasicCheckboxSaveHandler(showRemainingInsteadOfTotalSaveHandler, showRemainingInsteadOfTotal)
 `MCM_API_BasicCheckboxSaveHandler(includeTurretsSaveHandler, includeTurrets)
+`MCM_API_BasicCheckboxSaveHandler(debugSaveHandler, debug)
 
 `MCM_API_BasicCheckboxSaveHandler(noColorSaveHandler, noColor)
 `MCM_API_BasicDropDownSaveHandler(textAlignmentSaveHandler, textAlignment)
@@ -161,6 +170,7 @@ simulated function LoadSavedSettings()
 	alwaysShowActiveEnemyCount = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount, alwaysShowActiveEnemyCount);
 	showRemainingInsteadOfTotal = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal, showRemainingInsteadOfTotal);
 	includeTurrets = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.includeTurrets, includeTurrets);
+	debug = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.debug, debug);
 
 	noColor = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.noColor, noColor);
 	textAlignment = `MCM_CH_GetValue(class'KillCounter_Settings_Defaults'.default.textAlignment, textAlignment);
@@ -192,6 +202,7 @@ simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 	alwaysShowActiveEnemyCount_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.alwaysShowActiveEnemyCount, true);
 	showRemainingInsteadOfTotal_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.showRemainingInsteadOfTotal, true);
 	includeTurrets_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.includeTurrets, true);
+	debug_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.debug, true);
 
 	noColor_Checkbox.SetValue(class'KillCounter_Settings_Defaults'.default.noColor, true);
 	textAlignment_Dropdown.SetValue(class'KillCounter_Settings_Defaults'.default.textAlignment, true);
@@ -222,4 +233,9 @@ function bool ShouldDrawActiveCount()
 function bool ShouldSkipTurrets()
 {
 	return !self.includeTurrets;
+}
+
+function bool IsDebugEnabled()
+{
+	return debug;
 }
