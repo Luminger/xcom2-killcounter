@@ -2,6 +2,7 @@
 	   count and how many are currently active.
 
 NEW: WotC Ready - works on every XCOM2 version (despite the triangle)
+NEW: TheLost are taken into account as well!
 NEW: Now with MCM support! (Big thanks to Managarmr!)
 
 This mod adds a set of (very) simple counters to the Tactical UI. It shows you

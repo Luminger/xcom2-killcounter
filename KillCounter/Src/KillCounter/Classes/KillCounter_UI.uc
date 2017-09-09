@@ -54,16 +54,17 @@ function UpdateSettings(KillCounter_Settings newSettings)
 
 function Update(optional int historyIndex = LastIndex)
 {
-	local bool ShowTotal, ShowActive, SkipTurrets;
+	local bool ShowTotal, ShowActive, SkipTurrets, SkipTheLost;
 	local int killed, active, total;
 
 	ShowTotal = Settings.ShouldDrawTotalCount();
 	ShowActive = Settings.ShouldDrawActiveCount();
 	SkipTurrets = Settings.ShouldSkipTurrets();
+	SkipTheLost = Settings.ShouldSkipTheLost();
 
-	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets);
-	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets) : -1;
-	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets) : -1;
+	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets, SkipTheLost);
+	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets, SkipTheLost) : -1;
+	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets, SkipTheLost) : -1;
 
 	if (killed != LastKilled || active != LastActive || total != LastTotal)
 	{
