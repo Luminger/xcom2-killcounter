@@ -8,29 +8,43 @@ static function bool IsShadowChamberBuild()
 	return XComHQ.GetFacilityByName('ShadowChamber') != none;
 }
 
-static function int GetTotalEnemies(bool skipTurrets)
+static function GetCounters(int historyIndex, bool skipTurrets, out int killed, out int active, out int total)
 {
-	local int iTotal, iPrevSeen, iPrevKilled;
-	local array<XComGameState_Unit> arrUnits;
+	local XGBattle battle;
+	local XGPlayer localPlayer, otherPlayer;
+	local array <XComGameState_Unit> arrUnits;
+	local int i, iPrevSeen, iPrevKilled;
 
-	GetOpponentUnits(arrUnits, skipTurrets);
-	iTotal = arrUnits.Length;
+	battle = `BATTLE;
+	localPlayer = battle.GetLocalPlayer();
+
+	for(i = 0; i < battle.m_iNumPlayers; i++)
+	{
+		otherPlayer = battle.m_arrPlayers[i];
+		if(!localPlayer.IsEnemy(otherPlayer)) {
+			continue;
+		}
+
+		arrUnits.Length = 0;
+		otherPlayer.GetOriginalUnits(arrUnits, skipTurrets);
+
+		total += arrUnits.Length;
+		killed += GetKilledTeamUnits(historyIndex, arrUnits);
+		Active += GetActiveTeamUnits(historyIndex, arrUnits);
+	}
 
 	if(GetTransferMissionStats(iPrevSeen, iPrevKilled))
 	{
-		iTotal += iPrevSeen;
+		total += iPrevSeen;
+		killed += iPrevKilled;
 	}
-
-	return iTotal;
 }
 
-static function int GetKilledEnemies(int historyIndex, bool skipTurrets)
+static function int GetKilledTeamUnits(int historyIndex, array<XComGameState_Unit> arrUnits)
 {
-	local int iKilled, iPrevSeen, iPrevKilled;
-	local array<XComGameState_Unit> arrUnits;
+	local int iKilled;
 	local XComGameState_Unit arrUnit, currentUnit;
 
-	GetOpponentUnits(arrUnits, skipTurrets);
 	ForEach arrUnits(arrUnit) 
 	{
 		currentUnit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(arrUnit.ObjectID, eReturnType_Reference, historyIndex));
@@ -45,23 +59,16 @@ static function int GetKilledEnemies(int historyIndex, bool skipTurrets)
 		}
 	}
 
-	if(GetTransferMissionStats(iPrevSeen, iPrevKilled))
-	{
-		iKilled += iPrevKilled;
-	}
-
 	return iKilled;
 }
 
-static function int GetActiveEnemies(int historyIndex, bool skipTurrets)
+static function int GetActiveTeamUnits(int historyIndex, array<XComGameState_Unit> arrUnits)
 {
 	local int iActive, AlertLevel, DataID;
-	local array<XComGameState_Unit> arrUnits;
 	local XComGameState_Unit arrUnit, currentUnit;
 	local XComGameState_AIUnitData AIData;
 	local StateObjectReference KnowledgeRef;
-
-	GetOpponentUnits(arrUnits, skipTurrets);
+	
 	ForEach arrUnits(arrUnit) 
 	{
 		currentUnit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(arrUnit.ObjectID, eReturnType_Reference, historyIndex));
@@ -112,24 +119,6 @@ static function bool GetTransferMissionStats(out int seen, out int killed)
 	seen = 0;
 	killed = 0;
 	return false;
-}
-
-static function GetOpponentUnits(out array<XComGameState_Unit> arrUnits, bool skipTurrets = false)
-{
-	local XComGameState_BattleData StaticBattleData;
-	local XGBattle_SP Battle;
-
-	Battle = XGBattle_SP(`BATTLE);
-
-	StaticBattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
-	if(StaticBattleData.IsMultiplayer())
-	{
-		Battle.GetEnemyPlayer(XComTacticalController(Battle.GetALocalPlayerController()).m_XGPlayer).GetOriginalUnits(arrUnits, skipTurrets);
-	}
-	else
-	{
-		Battle.GetAIPlayer().GetOriginalUnits(arrUnits, skipTurrets);
-	}
 }
 
 // This is a UnrealScript translation from the original ActionScript function.

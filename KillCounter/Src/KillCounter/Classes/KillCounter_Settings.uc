@@ -225,6 +225,11 @@ function bool ShouldDrawTotalCount()
 	return class'KillCounter_Utils'.static.IsShadowChamberBuild();
 }
 
+function bool ShouldShowRemainingInsteadOfTotal()
+{
+	return self.showRemainingInsteadOfTotal;
+}
+
 function bool ShouldDrawActiveCount()
 {
 	return self.alwaysShowActiveEnemyCount;
