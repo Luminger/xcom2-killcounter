@@ -5,7 +5,6 @@ var config bool alwaysShowEnemyTotal;
 var config bool alwaysShowActiveEnemyCount;
 var config bool showRemainingInsteadOfTotal;
 var config bool includeTurrets;
-var config bool includeTheLost;
 var config bool debug;
 
 var config bool noColor;

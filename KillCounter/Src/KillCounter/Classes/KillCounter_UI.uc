@@ -32,12 +32,12 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	// Reset is needed here for a load from Tactical to Tactical as the
 	// current instance doesn't get destroyed - but OnInit is called
 	// again, so here's the correct place to wipe all of the state again.
-	LastKilled = default.LastKilled;
-	LastActive = default.LastActive;
-	LastTotal = default.LastTotal;
+	LastKilled = -1;
+	LastActive = -1;
+	LastTotal = -1;
+	LastIndex = -1;
 
 	UpdateSettings(new class'KillCounter_Settings');
-
 	return self;
 }
 
@@ -54,31 +54,24 @@ function UpdateSettings(KillCounter_Settings newSettings)
 
 function Update(optional int historyIndex = LastIndex)
 {
-	local bool ShowTotal, ShowActive, SkipTurrets, SkipTheLost;
+	local bool SkipTurrets;
 	local int killed, active, total;
 
-	ShowTotal = Settings.ShouldDrawTotalCount();
-	ShowActive = Settings.ShouldDrawActiveCount();
 	SkipTurrets = Settings.ShouldSkipTurrets();
-	SkipTheLost = Settings.ShouldSkipTheLost();
+	class'KillCounter_Utils'.static.GetCounters(historyIndex, SkipTurrets, killed, active, total);
 
-	killed = class'KillCounter_Utils'.static.GetKilledEnemies(historyIndex, SkipTurrets, SkipTheLost);
-	active = ShowActive ? class'KillCounter_Utils'.static.GetActiveEnemies(historyIndex, SkipTurrets, SkipTheLost) : -1;
-	total = ShowTotal ? class'KillCounter_Utils'.static.GetTotalEnemies(SkipTurrets, SkipTheLost) : -1;
-
-	if (killed != LastKilled || active != LastActive || total != LastTotal)
+	if (killed != LastKilled || active != LastActive || total != LastTotal || LastIndex == -1)
 	{
-		self.UpdateText(killed, active, total, historyIndex);
+		self.UpdateText(killed, active, total);
 		
 		LastKilled = killed;
 		LastActive = active;
 		LastTotal = total;
+		LastIndex = historyIndex;
 	}
-
-	UpdateText(killed, active, total);
 }
 
-function UpdateText(int killed, int active, int total, optional int historyIndex = LastIndex)
+function UpdateText(int killed, int active, int total)
 {
 	local string Value;
 
@@ -87,18 +80,16 @@ function UpdateText(int killed, int active, int total, optional int historyIndex
 		return;
 	}
 
-	LastIndex = historyIndex;
-
 	Value = strKilled @ AddColor(killed, eUIState_Good);
 
-	if(active != -1)
+	if(Settings.ShouldDrawActiveCount())
 	{
 		Value @= strActive @ AddColor(active, eUIState_Warning2);
 	}
 
-	if(total != -1)
+	if(Settings.ShouldDrawTotalCount())
 	{
-		if(settings.showRemainingInsteadOfTotal)
+		if(Settings.ShouldShowRemainingInsteadOfTotal())
 		{
 			Value @= strRemaining @ AddColor(total - killed, eUIState_Bad);
 		}
