@@ -1,5 +1,10 @@
 class KillCounter_Utils extends Object;
 
+// As we want to be backward compatible, we can't use eTeam_TheLost directly.
+// The value is defined in the Object.uc, with the value 32. This shouldn't ever
+// change (*cough* famous last words)
+const TeamTheLost = 32;
+
 static function bool IsShadowChamberBuild()
 {
 	local XComGameState_HeadquartersXCom XComHQ;
@@ -8,7 +13,7 @@ static function bool IsShadowChamberBuild()
 	return XComHQ.GetFacilityByName('ShadowChamber') != none;
 }
 
-static function GetCounters(int historyIndex, bool skipTurrets, out int killed, out int active, out int total)
+static function GetCounters(int historyIndex, bool skipTurrets, out int killed, out int killedLost, out int active, out int total)
 {
 	local XGBattle battle;
 	local XGPlayer localPlayer, otherPlayer;
@@ -17,6 +22,12 @@ static function GetCounters(int historyIndex, bool skipTurrets, out int killed, 
 
 	battle = `BATTLE;
 	localPlayer = battle.GetLocalPlayer();
+
+	// Initialized to -1 as it's used as an draw indicator in the UI; if it stays
+	// -1 than there's no point in drawing the lost counter as it will never show
+	// anything (as it won't in XCOM2 Classic or in WotC missions where TheLost
+	// aren't present).
+	killedLost = -1;
 
 	for(i = 0; i < battle.m_iNumPlayers; i++)
 	{
@@ -27,6 +38,12 @@ static function GetCounters(int historyIndex, bool skipTurrets, out int killed, 
 
 		arrUnits.Length = 0;
 		otherPlayer.GetOriginalUnits(arrUnits, skipTurrets);
+
+		if(otherPlayer.m_ETeam == TeamTheLost)
+		{
+			killedLost += GetKilledTeamUnits(historyIndex, arrUnits);
+			continue;
+		}
 
 		total += arrUnits.Length;
 		killed += GetKilledTeamUnits(historyIndex, arrUnits);

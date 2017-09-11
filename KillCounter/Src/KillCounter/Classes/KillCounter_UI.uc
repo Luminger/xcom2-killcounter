@@ -11,9 +11,14 @@ var UIText Text;
 var UITextStyleObject TextStyle;
 
 var int LastKilled;
+var int LastKilledLost;
 var int LastActive;
 var int LastTotal;
 var int LastIndex;
+
+// Stolen from UiUtilities_Colors::THELOST_HTML_COLOR as we can't reference that color
+// otherwise to stay backward compatible
+const TheLostColor = "acd373";
 
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
 {
@@ -33,6 +38,7 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	// current instance doesn't get destroyed - but OnInit is called
 	// again, so here's the correct place to wipe all of the state again.
 	LastKilled = -1;
+	LastKilledLost = -1;
 	LastActive = -1;
 	LastTotal = -1;
 	LastIndex = -1;
@@ -55,23 +61,24 @@ function UpdateSettings(KillCounter_Settings newSettings)
 function Update(optional int historyIndex = LastIndex)
 {
 	local bool SkipTurrets;
-	local int killed, active, total;
+	local int killed, killedLost, active, total;
 
 	SkipTurrets = Settings.ShouldSkipTurrets();
-	class'KillCounter_Utils'.static.GetCounters(historyIndex, SkipTurrets, killed, active, total);
+	class'KillCounter_Utils'.static.GetCounters(historyIndex, SkipTurrets, killed, killedLost, active, total);
 
-	if (killed != LastKilled || active != LastActive || total != LastTotal || LastIndex == -1)
+	if (killed != LastKilled || killedLost != LastKilledLost || active != LastActive || total != LastTotal || LastIndex == -1)
 	{
-		self.UpdateText(killed, active, total);
+		self.UpdateText(killed, killedLost, active, total);
 		
 		LastKilled = killed;
+		LastKilledLost = killedLost;
 		LastActive = active;
 		LastTotal = total;
 		LastIndex = historyIndex;
 	}
 }
 
-function UpdateText(int killed, int active, int total)
+function UpdateText(int killed, int killedLost, int active, int total)
 {
 	local string Value;
 
@@ -81,6 +88,11 @@ function UpdateText(int killed, int active, int total)
 	}
 
 	Value = strKilled @ AddColor(killed, eUIState_Good);
+
+	if(killedLost != -1)
+	{
+		Value @= "(" $ AddStrColor(killedLost, TheLostColor) $ ")";
+	}
 
 	if(Settings.ShouldDrawActiveCount())
 	{
@@ -112,9 +124,20 @@ function string AddColor(int value, int clr)
 	return class'UIUtilities_Text'.static.GetColoredText(string(value), clr);
 }
 
+function string AddStrColor(int value, string clr)
+{
+	if(settings.noColor)
+	{
+		return string(value);
+	}
+
+	return "<font color='#" $ clr $ "'>" $ string(value) $ "</font>";
+}
+
 defaultproperties
 {
 	LastKilled = -1;
+	LastKilledLost = -1;
 	LastActive = -1;
 	LastTotal = -1;
 	LastIndex = -1;
